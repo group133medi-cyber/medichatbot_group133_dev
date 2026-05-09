@@ -42,6 +42,12 @@ def get_response(history):
 
     matched = []
 
+    total_score = 0
+
+    emergency_detected = False
+
+    possible_conditions = []
+
     # ---------------- SYMPTOM MATCHING ----------------
 
     for symptom, info in data.items():
@@ -52,6 +58,16 @@ def get_response(history):
 
                 matched.append(info)
 
+                total_score += info.get("score", 0)
+
+                if info.get("emergency"):
+
+                    emergency_detected = True
+
+                possible_conditions.extend(
+                    info.get("possible_conditions", [])
+                )
+
                 break
 
     # ---------------- AI FALLBACK ----------------
@@ -60,27 +76,66 @@ def get_response(history):
 
         return get_ai_response(history)
 
-    # ---------------- EMERGENCY DETECTION ----------------
+    # ---------------- DETERMINE SEVERITY ----------------
 
-    for m in matched:
+    if total_score >= 8:
 
-        if m.get("severity") == "high":
+        overall_severity = "🔴 Critical"
 
-            return (
-                f"⚠️ {m['description']}\n\n"
-                f"👉 {m['advice']}\n\n"
-                f"Please seek immediate medical attention."
-            )
+    elif total_score >= 4:
 
-    # ---------------- NORMAL RESPONSE ----------------
+        overall_severity = "🟠 Moderate"
 
-    reply = "Based on your symptoms so far:\n\n"
+    else:
+
+        overall_severity = "🟢 Mild"
+
+    # ---------------- EMERGENCY RESPONSE ----------------
+
+    if emergency_detected:
+
+        emergency_replies = []
+
+        for m in matched:
+
+            if m.get("emergency"):
+
+                emergency_replies.append(
+                    f"⚠️ {m['description']}\n"
+                    f"👉 {m['advice']}"
+                )
+
+        return (
+            "🚨 EMERGENCY SYMPTOMS DETECTED\n\n"
+            + "\n\n".join(emergency_replies)
+            + "\n\nPlease seek immediate medical attention."
+        )
+
+    # ---------------- BUILD RESPONSE ----------------
+
+    reply = f"📊 Overall Severity: {overall_severity}\n\n"
+
+    reply += "Based on your symptoms:\n\n"
 
     for m in matched:
 
         reply += f"• {m['description']}\n"
 
-        reply += f"Advice: {m['advice']}\n\n"
+        reply += f"👉 Advice: {m['advice']}\n\n"
+
+    # ---------------- POSSIBLE CONDITIONS ----------------
+
+    unique_conditions = list(set(possible_conditions))
+
+    if unique_conditions:
+
+        reply += "🧠 Possible Related Conditions:\n"
+
+        for condition in unique_conditions[:5]:
+
+            reply += f"• {condition}\n"
+
+        reply += "\n"
 
     # ---------------- FOLLOW-UP QUESTIONS ----------------
 
@@ -94,7 +149,9 @@ def get_response(history):
 
     if follow_ups:
 
-        reply += "❓ " + random.choice(follow_ups)
+        reply += "❓ Follow-up Question:\n"
+
+        reply += random.choice(follow_ups)
 
     return reply.strip()
 
@@ -112,13 +169,21 @@ def get_ai_response(history):
                 {
                     "role": "system",
                     "content": (
-                        "You are a medical assistant. "
-                        "Provide general health information only. "
-                        "Do not give diagnoses or prescriptions. "
-                        "If symptoms are serious, advise consulting a doctor."
+                        "You are an AI medical assistant chatbot.\n\n"
+
+                        "Your responsibilities:\n"
+                        "- Provide general medical guidance\n"
+                        "- Ask relevant follow-up questions\n"
+                        "- Explain symptoms clearly\n"
+                        "- Encourage professional consultation when needed\n"
+                        "- Never provide prescriptions\n"
+                        "- Never claim certainty in diagnosis\n"
+                        "- Keep responses concise and easy to understand\n"
+                        "- If symptoms appear severe or emergency-related, "
+                        "advise immediate medical attention."
                     )
                 }
-            ] + history[-6:]
+            ] + history[-10:]
         )
 
         return completion.choices[0].message.content
