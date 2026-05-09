@@ -98,7 +98,6 @@ with st.sidebar:
     st.info("""
 Features:
 - Symptom Analysis
-- Severity Detection
 - AI Suggestions
 - Emergency Alerts
 - Follow-up Questions
@@ -370,18 +369,18 @@ if user_input:
         # Typing Animation
         typing_effect(final_reply)
 
-        # Severity Badge
+        # Show severity only for important symptoms
         if "chest pain" in user_input.lower():
 
             st.error("🔴 Critical Severity")
 
+        elif "breathing" in user_input.lower():
+
+            st.error("🚨 Breathing issue detected")
+
         elif "fever" in user_input.lower():
 
             st.warning("🟠 Moderate Severity")
-
-        else:
-
-            st.success("🟢 Mild Severity")
 
     # Store Assistant Message
     st.session_state.messages.append({
