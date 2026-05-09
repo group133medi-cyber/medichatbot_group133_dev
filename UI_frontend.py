@@ -1,7 +1,7 @@
 import streamlit as st
 import time
 
-# IMPORT YOUR BACKEND FUNCTION
+# IMPORT BACKEND FUNCTION
 from chatbot import get_response
 
 # ---------------- PAGE CONFIG ----------------
@@ -25,7 +25,7 @@ section[data-testid="stSidebar"] {
     background: linear-gradient(180deg, #dbeafe, #eff6ff);
 }
 
-/* Chat Cards */
+/* Chat Messages */
 [data-testid="stChatMessage"] {
     border-radius: 18px;
     padding: 10px;
@@ -47,7 +47,7 @@ section[data-testid="stSidebar"] {
     color: white;
 }
 
-/* Symptom Cards */
+/* Premium Symptom Cards */
 .symptom-card {
     background: linear-gradient(135deg, #ffffff, #edf4ff);
     padding: 18px;
@@ -64,12 +64,20 @@ section[data-testid="stSidebar"] {
     box-shadow: 0 8px 20px rgba(37,99,235,0.2);
 }
 
+/* Smaller Emojis */
+.symptom-emoji {
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+
+/* Title */
 .symptom-title {
     font-size: 18px;
     font-weight: 600;
     color: #1e3a8a;
 }
 
+/* Description */
 .symptom-desc {
     font-size: 13px;
     color: #6b7280;
@@ -91,12 +99,12 @@ with st.sidebar:
 Features:
 - Symptom Analysis
 - Severity Detection
-- Follow-up Questions
-- Emergency Detection
 - AI Suggestions
+- Emergency Alerts
+- Follow-up Questions
 """)
 
-    st.warning("⚠️ Educational use only.")
+    st.warning("⚠️ Educational use only")
 
     # Temperature Meter
     st.subheader("🌡️ Body Temperature")
@@ -109,15 +117,18 @@ Features:
     )
 
     if temperature > 39:
-        st.error("High Fever Detected 🔥")
+
+        st.error("🔥 High Fever Detected")
 
     elif temperature > 37.5:
-        st.warning("Mild Fever")
+
+        st.warning("🟠 Mild Fever")
 
     else:
-        st.success("Normal Temperature")
 
-    # Reset Chat
+        st.success("🟢 Normal Temperature")
+
+    # Reset Button
     if st.button("🗑️ Reset Chat"):
 
         st.session_state.messages = []
@@ -127,7 +138,7 @@ Features:
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# ---------------- QUICK SYMPTOM HEADER ----------------
+# ---------------- QUICK SYMPTOM TITLE ----------------
 st.markdown("""
 <h2 style='color:#2563eb;'>
 ⚡ Quick Symptom Checker
@@ -143,7 +154,7 @@ with row1_col1:
 
     st.markdown("""
     <div class="symptom-card">
-        <div style="font-size:40px;">🤒</div>
+        <div class="symptom-emoji">🤒</div>
         <div class="symptom-title">Fever</div>
         <div class="symptom-desc">
             High temperature & weakness
@@ -161,7 +172,7 @@ with row1_col2:
 
     st.markdown("""
     <div class="symptom-card">
-        <div style="font-size:40px;">🤧</div>
+        <div class="symptom-emoji">🤧</div>
         <div class="symptom-title">Cough</div>
         <div class="symptom-desc">
             Cold & throat irritation
@@ -179,7 +190,7 @@ with row1_col3:
 
     st.markdown("""
     <div class="symptom-card">
-        <div style="font-size:40px;">💊</div>
+        <div class="symptom-emoji">💊</div>
         <div class="symptom-title">Headache</div>
         <div class="symptom-desc">
             Stress & migraine
@@ -201,7 +212,7 @@ with row2_col1:
 
     st.markdown("""
     <div class="symptom-card">
-        <div style="font-size:40px;">🫀</div>
+        <div class="symptom-emoji">🫀</div>
         <div class="symptom-title">Chest Pain</div>
         <div class="symptom-desc">
             Heart discomfort symptoms
@@ -219,10 +230,10 @@ with row2_col2:
 
     st.markdown("""
     <div class="symptom-card">
-        <div style="font-size:40px;">🤢</div>
+        <div class="symptom-emoji">🤢</div>
         <div class="symptom-title">Vomiting</div>
         <div class="symptom-desc">
-            Nausea & stomach issue
+            Nausea & stomach issues
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -237,10 +248,10 @@ with row2_col3:
 
     st.markdown("""
     <div class="symptom-card">
-        <div style="font-size:40px;">😵</div>
+        <div class="symptom-emoji">😵</div>
         <div class="symptom-title">Dizziness</div>
         <div class="symptom-desc">
-            Weakness & balance issue
+            Weakness & balance issues
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -251,6 +262,7 @@ with row2_col3:
     )
 
 # ---------------- QUICK INPUT ----------------
+
 user_input = None
 
 if fever_btn:
@@ -272,6 +284,7 @@ elif dizziness_btn:
     user_input = "I feel dizziness"
 
 # ---------------- CHAT DISPLAY ----------------
+
 for msg in st.session_state.messages:
 
     with st.chat_message(msg["role"]):
@@ -279,6 +292,7 @@ for msg in st.session_state.messages:
         st.markdown(msg["content"])
 
 # ---------------- TYPING EFFECT ----------------
+
 def typing_effect(text):
 
     placeholder = st.empty()
@@ -293,7 +307,8 @@ def typing_effect(text):
 
         time.sleep(0.01)
 
-# ---------------- USER CHAT INPUT ----------------
+# ---------------- CHAT INPUT ----------------
+
 chat_input = st.chat_input(
     "Describe your symptoms..."
 )
@@ -301,27 +316,8 @@ chat_input = st.chat_input(
 if chat_input:
     user_input = chat_input
 
-# ---------------- SEVERITY PROGRESS ----------------
-def severity_progress(text):
-
-    text = text.lower()
-
-    if "chest pain" in text or "breathing" in text:
-        return 95
-
-    elif "fever" in text:
-        return 60
-
-    elif "vomiting" in text:
-        return 50
-
-    elif "dizziness" in text:
-        return 45
-
-    else:
-        return 20
-
 # ---------------- PROCESS ----------------
+
 if user_input:
 
     # Show User Message
@@ -338,8 +334,8 @@ if user_input:
     # Emergency Alert
     emergency_keywords = [
         "chest pain",
-        "heart attack",
         "breathing",
+        "heart attack",
         "blood"
     ]
 
@@ -374,14 +370,18 @@ if user_input:
         # Typing Animation
         typing_effect(final_reply)
 
-        # Severity Progress Bar
-        severity = severity_progress(user_input)
+        # Severity Badge
+        if "chest pain" in user_input.lower():
 
-        st.markdown("### 📈 Severity Meter")
+            st.error("🔴 Critical Severity")
 
-        st.progress(severity)
+        elif "fever" in user_input.lower():
 
-        st.caption(f"Severity Score: {severity}%")
+            st.warning("🟠 Moderate Severity")
+
+        else:
+
+            st.success("🟢 Mild Severity")
 
     # Store Assistant Message
     st.session_state.messages.append({
@@ -390,6 +390,7 @@ if user_input:
     })
 
 # ---------------- FOOTER ----------------
+
 st.markdown("---")
 
 st.caption(
