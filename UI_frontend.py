@@ -15,35 +15,64 @@ st.set_page_config(
 st.markdown("""
 <style>
 
-/* Main background */
+/* Main App Background */
 .stApp {
     background-color: #f5f9ff;
 }
 
-/* Chat bubbles */
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #dbeafe, #eff6ff);
+}
+
+/* Chat Message Box */
 [data-testid="stChatMessage"] {
-    border-radius: 15px;
+    border-radius: 18px;
     padding: 10px;
     margin-bottom: 10px;
 }
 
-/* Sidebar */
-section[data-testid="stSidebar"] {
-    background-color: #e8f0ff;
-}
-
 /* Buttons */
-.stButton>button {
-    border-radius: 10px;
-    background-color: #4f8bf9;
+.stButton > button {
+    border-radius: 12px;
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
     color: white;
     border: none;
-    padding: 8px 15px;
+    padding: 10px 15px;
+    font-weight: 600;
 }
 
-.stButton>button:hover {
-    background-color: #2563eb;
+.stButton > button:hover {
+    background: linear-gradient(135deg, #1d4ed8, #2563eb);
     color: white;
+}
+
+/* Premium Symptom Cards */
+.symptom-card {
+    background: linear-gradient(135deg, #ffffff, #edf4ff);
+    padding: 18px;
+    border-radius: 18px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    transition: 0.3s;
+    border: 1px solid #dbeafe;
+    margin-bottom: 10px;
+}
+
+.symptom-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(37,99,235,0.2);
+}
+
+.symptom-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1e3a8a;
+}
+
+.symptom-desc {
+    font-size: 13px;
+    color: #6b7280;
 }
 
 </style>
@@ -59,16 +88,16 @@ with st.sidebar:
     st.header("🩺 MediCare AI")
 
     st.info("""
-This AI chatbot provides:
-- Symptom analysis
-- Severity detection
-- Medical suggestions
-- Follow-up questions
+This chatbot provides:
+- Symptom Analysis
+- Severity Detection
+- Medical Suggestions
+- Follow-up Questions
 """)
 
-    st.warning("⚠️ Not a real medical diagnosis")
+    st.warning("⚠️ This is not a real medical diagnosis")
 
-    # Reset button
+    # Reset Chat
     if st.button("🗑️ Reset Chat"):
 
         st.session_state.messages = []
@@ -78,21 +107,71 @@ This AI chatbot provides:
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# ---------------- QUICK SYMPTOM BUTTONS ----------------
-st.subheader("⚡ Quick Symptoms")
+# ---------------- PREMIUM QUICK SYMPTOMS ----------------
+
+st.markdown("""
+<h3 style='margin-bottom:10px; color:#2563eb;'>
+⚡ Quick Symptom Checker
+</h3>
+""", unsafe_allow_html=True)
 
 col1, col2, col3 = st.columns(3)
 
+# Fever Card
 with col1:
-    fever_btn = st.button("🤒 Fever")
 
+    st.markdown("""
+    <div class="symptom-card">
+        <div style="font-size:40px;">🤒</div>
+        <div class="symptom-title">Fever</div>
+        <div class="symptom-desc">
+            High temperature, weakness
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    fever_btn = st.button(
+        "Check Fever",
+        use_container_width=True
+    )
+
+# Cough Card
 with col2:
-    cough_btn = st.button("🤧 Cough")
 
+    st.markdown("""
+    <div class="symptom-card">
+        <div style="font-size:40px;">🤧</div>
+        <div class="symptom-title">Cough</div>
+        <div class="symptom-desc">
+            Cold, throat irritation
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    cough_btn = st.button(
+        "Check Cough",
+        use_container_width=True
+    )
+
+# Headache Card
 with col3:
-    headache_btn = st.button("💊 Headache")
 
-# Assign quick input
+    st.markdown("""
+    <div class="symptom-card">
+        <div style="font-size:40px;">💊</div>
+        <div class="symptom-title">Headache</div>
+        <div class="symptom-desc">
+            Stress, migraine symptoms
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    headache_btn = st.button(
+        "Check Headache",
+        use_container_width=True
+    )
+
+# ---------------- QUICK INPUT ----------------
 if fever_btn:
     user_input = "I have fever"
 
@@ -130,7 +209,7 @@ def typing_effect(text):
 # ---------------- USER INPUT ----------------
 chat_input = st.chat_input("Describe your symptoms...")
 
-# If typed input exists, override quick button
+# Manual input overrides button input
 if chat_input:
     user_input = chat_input
 
@@ -142,13 +221,13 @@ if user_input:
 
         st.markdown(f"👤 {user_input}")
 
-    # Store user message
+    # Store User Message
     st.session_state.messages.append({
         "role": "user",
         "content": f"👤 {user_input}"
     })
 
-    # ---------------- EMERGENCY WARNING ----------------
+    # ---------------- EMERGENCY ALERT ----------------
     emergency_keywords = [
         "chest pain",
         "breathing",
@@ -183,7 +262,7 @@ if user_input:
         # ---------------- TYPING EFFECT ----------------
         typing_effect(final_reply)
 
-    # Store assistant response
+    # Store Assistant Message
     st.session_state.messages.append({
         "role": "assistant",
         "content": final_reply
