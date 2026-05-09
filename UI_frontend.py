@@ -8,14 +8,14 @@ from chatbot import get_response
 st.set_page_config(
     page_title="MediCare AI",
     page_icon="🩺",
-    layout="centered"
+    layout="wide"
 )
 
 # ---------------- CUSTOM CSS ----------------
 st.markdown("""
 <style>
 
-/* Main App Background */
+/* Background */
 .stApp {
     background-color: #f5f9ff;
 }
@@ -25,7 +25,7 @@ section[data-testid="stSidebar"] {
     background: linear-gradient(180deg, #dbeafe, #eff6ff);
 }
 
-/* Chat Message Box */
+/* Chat Cards */
 [data-testid="stChatMessage"] {
     border-radius: 18px;
     padding: 10px;
@@ -47,7 +47,7 @@ section[data-testid="stSidebar"] {
     color: white;
 }
 
-/* Premium Symptom Cards */
+/* Symptom Cards */
 .symptom-card {
     background: linear-gradient(135deg, #ffffff, #edf4ff);
     padding: 18px;
@@ -88,14 +88,34 @@ with st.sidebar:
     st.header("🩺 MediCare AI")
 
     st.info("""
-This chatbot provides:
+Features:
 - Symptom Analysis
 - Severity Detection
-- Medical Suggestions
 - Follow-up Questions
+- Emergency Detection
+- AI Suggestions
 """)
 
-    st.warning("⚠️ This is not a real medical diagnosis")
+    st.warning("⚠️ Educational use only.")
+
+    # Temperature Meter
+    st.subheader("🌡️ Body Temperature")
+
+    temperature = st.slider(
+        "Select Temperature (°C)",
+        35.0,
+        42.0,
+        37.0
+    )
+
+    if temperature > 39:
+        st.error("High Fever Detected 🔥")
+
+    elif temperature > 37.5:
+        st.warning("Mild Fever")
+
+    else:
+        st.success("Normal Temperature")
 
     # Reset Chat
     if st.button("🗑️ Reset Chat"):
@@ -107,25 +127,26 @@ This chatbot provides:
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# ---------------- PREMIUM QUICK SYMPTOMS ----------------
-
+# ---------------- QUICK SYMPTOM HEADER ----------------
 st.markdown("""
-<h3 style='margin-bottom:10px; color:#2563eb;'>
+<h2 style='color:#2563eb;'>
 ⚡ Quick Symptom Checker
-</h3>
+</h2>
 """, unsafe_allow_html=True)
 
-col1, col2, col3 = st.columns(3)
+# ---------------- SYMPTOM CARDS ----------------
 
-# Fever Card
-with col1:
+row1_col1, row1_col2, row1_col3 = st.columns(3)
+
+# Fever
+with row1_col1:
 
     st.markdown("""
     <div class="symptom-card">
         <div style="font-size:40px;">🤒</div>
         <div class="symptom-title">Fever</div>
         <div class="symptom-desc">
-            High temperature, weakness
+            High temperature & weakness
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -135,15 +156,15 @@ with col1:
         use_container_width=True
     )
 
-# Cough Card
-with col2:
+# Cough
+with row1_col2:
 
     st.markdown("""
     <div class="symptom-card">
         <div style="font-size:40px;">🤧</div>
         <div class="symptom-title">Cough</div>
         <div class="symptom-desc">
-            Cold, throat irritation
+            Cold & throat irritation
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -153,15 +174,15 @@ with col2:
         use_container_width=True
     )
 
-# Headache Card
-with col3:
+# Headache
+with row1_col3:
 
     st.markdown("""
     <div class="symptom-card">
         <div style="font-size:40px;">💊</div>
         <div class="symptom-title">Headache</div>
         <div class="symptom-desc">
-            Stress, migraine symptoms
+            Stress & migraine
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -171,7 +192,67 @@ with col3:
         use_container_width=True
     )
 
+# ---------------- SECOND ROW ----------------
+
+row2_col1, row2_col2, row2_col3 = st.columns(3)
+
+# Chest Pain
+with row2_col1:
+
+    st.markdown("""
+    <div class="symptom-card">
+        <div style="font-size:40px;">🫀</div>
+        <div class="symptom-title">Chest Pain</div>
+        <div class="symptom-desc">
+            Heart discomfort symptoms
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    chest_btn = st.button(
+        "Check Chest Pain",
+        use_container_width=True
+    )
+
+# Vomiting
+with row2_col2:
+
+    st.markdown("""
+    <div class="symptom-card">
+        <div style="font-size:40px;">🤢</div>
+        <div class="symptom-title">Vomiting</div>
+        <div class="symptom-desc">
+            Nausea & stomach issue
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    vomiting_btn = st.button(
+        "Check Vomiting",
+        use_container_width=True
+    )
+
+# Dizziness
+with row2_col3:
+
+    st.markdown("""
+    <div class="symptom-card">
+        <div style="font-size:40px;">😵</div>
+        <div class="symptom-title">Dizziness</div>
+        <div class="symptom-desc">
+            Weakness & balance issue
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    dizziness_btn = st.button(
+        "Check Dizziness",
+        use_container_width=True
+    )
+
 # ---------------- QUICK INPUT ----------------
+user_input = None
+
 if fever_btn:
     user_input = "I have fever"
 
@@ -181,8 +262,14 @@ elif cough_btn:
 elif headache_btn:
     user_input = "I have headache"
 
-else:
-    user_input = None
+elif chest_btn:
+    user_input = "I have chest pain"
+
+elif vomiting_btn:
+    user_input = "I have vomiting"
+
+elif dizziness_btn:
+    user_input = "I feel dizziness"
 
 # ---------------- CHAT DISPLAY ----------------
 for msg in st.session_state.messages:
@@ -206,17 +293,38 @@ def typing_effect(text):
 
         time.sleep(0.01)
 
-# ---------------- USER INPUT ----------------
-chat_input = st.chat_input("Describe your symptoms...")
+# ---------------- USER CHAT INPUT ----------------
+chat_input = st.chat_input(
+    "Describe your symptoms..."
+)
 
-# Manual input overrides button input
 if chat_input:
     user_input = chat_input
+
+# ---------------- SEVERITY PROGRESS ----------------
+def severity_progress(text):
+
+    text = text.lower()
+
+    if "chest pain" in text or "breathing" in text:
+        return 95
+
+    elif "fever" in text:
+        return 60
+
+    elif "vomiting" in text:
+        return 50
+
+    elif "dizziness" in text:
+        return 45
+
+    else:
+        return 20
 
 # ---------------- PROCESS ----------------
 if user_input:
 
-    # ---------------- SHOW USER MESSAGE ----------------
+    # Show User Message
     with st.chat_message("user"):
 
         st.markdown(f"👤 {user_input}")
@@ -227,26 +335,30 @@ if user_input:
         "content": f"👤 {user_input}"
     })
 
-    # ---------------- EMERGENCY ALERT ----------------
+    # Emergency Alert
     emergency_keywords = [
         "chest pain",
-        "breathing",
         "heart attack",
+        "breathing",
         "blood"
     ]
 
-    if any(word in user_input.lower() for word in emergency_keywords):
+    if any(word in user_input.lower()
+           for word in emergency_keywords):
 
-        st.error("🚨 Seek immediate medical attention immediately!")
+        st.error(
+            "🚨 Seek immediate medical attention!"
+        )
 
-    # ---------------- ASSISTANT RESPONSE ----------------
+    # Assistant Message
     with st.chat_message("assistant"):
 
-        with st.spinner("🧠 Analyzing symptoms..."):
+        with st.spinner(
+            "🧠 Analyzing symptoms..."
+        ):
 
             try:
 
-                # Backend Response
                 final_reply = get_response(
                     st.session_state.messages
                 )
@@ -254,13 +366,22 @@ if user_input:
             except Exception as e:
 
                 final_reply = (
-                    "⚠️ Error while generating response."
+                    "⚠️ Error generating response."
                 )
 
                 print("Backend Error:", e)
 
-        # ---------------- TYPING EFFECT ----------------
+        # Typing Animation
         typing_effect(final_reply)
+
+        # Severity Progress Bar
+        severity = severity_progress(user_input)
+
+        st.markdown("### 📈 Severity Meter")
+
+        st.progress(severity)
+
+        st.caption(f"Severity Score: {severity}%")
 
     # Store Assistant Message
     st.session_state.messages.append({
@@ -271,4 +392,6 @@ if user_input:
 # ---------------- FOOTER ----------------
 st.markdown("---")
 
-st.caption("🏥 MediCare AI | Smart Healthcare Chatbot")
+st.caption(
+    "🏥 MediCare AI | Smart Healthcare Chatbot"
+)
