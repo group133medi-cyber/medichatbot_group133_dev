@@ -28,7 +28,14 @@ with open(json_path, "r", encoding="utf-8") as file:
 
 def get_response(history):
 
-    # Combine recent user messages
+    # ---------------- SYMPTOM MEMORY ----------------
+
+    if "symptom_memory" not in st.session_state:
+
+        st.session_state.symptom_memory = []
+
+    # ---------------- COMBINE USER MESSAGES ----------------
+
     recent_text = " ".join(
         [
             h["content"]
@@ -42,6 +49,8 @@ def get_response(history):
 
     matched = []
 
+    combo_matches = []
+
     total_score = 0
 
     emergency_detected = False
@@ -50,7 +59,7 @@ def get_response(history):
 
     # ---------------- SYMPTOM MATCHING ----------------
 
-    for symptom, info in data.items():
+    for symptom, info in data["symptoms"].items():
 
         for keyword in info.get("keywords", []):
 
@@ -68,21 +77,44 @@ def get_response(history):
                     info.get("possible_conditions", [])
                 )
 
+                # SAVE SYMPTOM MEMORY
+                if symptom not in st.session_state.symptom_memory:
+
+                    st.session_state.symptom_memory.append(symptom)
+
                 break
+
+    # ---------------- COMBINATION ANALYSIS ----------------
+
+    memory = set(st.session_state.symptom_memory)
+
+    for combo in data["symptom_combinations"]:
+
+        combo_symptoms = set(combo["symptoms"])
+
+        if combo_symptoms.issubset(memory):
+
+            combo_matches.append(combo)
+
+            total_score += combo.get("score_bonus", 0)
+
+            if combo.get("emergency"):
+
+                emergency_detected = True
 
     # ---------------- AI FALLBACK ----------------
 
-    if not matched:
+    if not matched and not combo_matches:
 
         return get_ai_response(history)
 
-    # ---------------- DETERMINE SEVERITY ----------------
+    # ---------------- DETERMINE OVERALL SEVERITY ----------------
 
-    if total_score >= 8:
+    if total_score >= 10:
 
         overall_severity = "🔴 Critical"
 
-    elif total_score >= 4:
+    elif total_score >= 5:
 
         overall_severity = "🟠 Moderate"
 
@@ -94,48 +126,81 @@ def get_response(history):
 
     if emergency_detected:
 
-        emergency_replies = []
+        emergency_reply = (
+            "🚨 EMERGENCY SYMPTOMS DETECTED\n\n"
+        )
 
         for m in matched:
 
             if m.get("emergency"):
 
-                emergency_replies.append(
+                emergency_reply += (
                     f"⚠️ {m['description']}\n"
-                    f"👉 {m['advice']}"
+                    f"👉 {m['advice']}\n\n"
                 )
 
-        return (
-            "🚨 EMERGENCY SYMPTOMS DETECTED\n\n"
-            + "\n\n".join(emergency_replies)
-            + "\n\nPlease seek immediate medical attention."
+        for combo in combo_matches:
+
+            if combo.get("emergency"):
+
+                emergency_reply += (
+                    f"🧠 {combo['condition']}\n"
+                    f"👉 {combo['advice']}\n\n"
+                )
+
+        emergency_reply += (
+            "Please seek immediate medical attention."
         )
+
+        return emergency_reply
 
     # ---------------- BUILD RESPONSE ----------------
 
     reply = f"📊 Overall Severity: {overall_severity}\n\n"
 
-    reply += "Based on your symptoms:\n\n"
+    reply += "🩺 Detected Symptoms:\n\n"
 
     for m in matched:
 
-        reply += f"• {m['description']}\n"
+        reply += (
+            f"• {m['description']}\n"
+        )
 
-        reply += f"👉 Advice: {m['advice']}\n\n"
+        reply += (
+            f"👉 Advice: {m['advice']}\n\n"
+        )
 
     # ---------------- POSSIBLE CONDITIONS ----------------
 
-    unique_conditions = list(set(possible_conditions))
+    unique_conditions = list(
+        set(possible_conditions)
+    )
 
     if unique_conditions:
 
-        reply += "🧠 Possible Related Conditions:\n"
+        reply += "🧠 Possible Related Conditions:\n\n"
 
         for condition in unique_conditions[:5]:
 
             reply += f"• {condition}\n"
 
         reply += "\n"
+
+    # ---------------- SYMPTOM COMBINATION OUTPUT ----------------
+
+    if combo_matches:
+
+        reply += "🔍 Symptom Combination Analysis:\n\n"
+
+        for combo in combo_matches:
+
+            reply += (
+                f"🧠 {combo['condition']}\n"
+            )
+
+            reply += (
+                f"👉 {combo['advice']}\n\n"
+            )
 
     # ---------------- FOLLOW-UP QUESTIONS ----------------
 
@@ -145,17 +210,19 @@ def get_response(history):
 
         if "follow_up" in m:
 
-            follow_ups.extend(m["follow_up"])
+            follow_ups.extend(
+                m["follow_up"]
+            )
 
     if follow_ups:
 
-        reply += "❓ Follow-up Question:\n"
+        reply += "❓ Follow-up Question:\n\n"
 
         reply += random.choice(follow_ups)
 
     return reply.strip()
 
-# ---------------- HUGGING FACE AI RESPONSE ----------------
+# ---------------- AI FALLBACK ----------------
 
 def get_ai_response(history):
 
@@ -171,16 +238,15 @@ def get_ai_response(history):
                     "content": (
                         "You are an AI medical assistant chatbot.\n\n"
 
-                        "Your responsibilities:\n"
+                        "Responsibilities:\n"
                         "- Provide general medical guidance\n"
-                        "- Ask relevant follow-up questions\n"
+                        "- Ask follow-up questions\n"
                         "- Explain symptoms clearly\n"
-                        "- Encourage professional consultation when needed\n"
                         "- Never provide prescriptions\n"
                         "- Never claim certainty in diagnosis\n"
-                        "- Keep responses concise and easy to understand\n"
-                        "- If symptoms appear severe or emergency-related, "
-                        "advise immediate medical attention."
+                        "- Advise doctor consultation when needed\n"
+                        "- If symptoms appear severe, "
+                        "recommend immediate medical attention."
                     )
                 }
             ] + history[-10:]
