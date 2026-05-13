@@ -25,6 +25,11 @@ section[data-testid="stSidebar"] {
     background: linear-gradient(180deg, #dbeafe, #eff6ff);
 }
 
+/* Smooth Scroll */
+html {
+    scroll-behavior: smooth;
+}
+
 /* Chat Messages */
 [data-testid="stChatMessage"] {
     border-radius: 18px;
@@ -34,12 +39,13 @@ section[data-testid="stSidebar"] {
 
 /* Buttons */
 .stButton > button {
-    border-radius: 12px;
+    border-radius: 10px;
     background: linear-gradient(135deg, #2563eb, #3b82f6);
     color: white;
     border: none;
-    padding: 10px 15px;
+    padding: 8px 12px;
     font-weight: 600;
+    font-size: 14px;
 }
 
 .stButton > button:hover {
@@ -47,39 +53,32 @@ section[data-testid="stSidebar"] {
     color: white;
 }
 
-/* Premium Symptom Cards */
+/* Compact Symptom Cards */
 .symptom-card {
     background: linear-gradient(135deg, #ffffff, #edf4ff);
-    padding: 18px;
-    border-radius: 18px;
+    padding: 12px;
+    border-radius: 14px;
     text-align: center;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-    transition: 0.3s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     border: 1px solid #dbeafe;
-    margin-bottom: 10px;
-}
-
-.symptom-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(37,99,235,0.2);
-}
-
-/* Smaller Emojis */
-.symptom-emoji {
-    font-size: 28px;
     margin-bottom: 8px;
 }
 
-/* Title */
+/* Smaller Emoji */
+.symptom-emoji {
+    font-size: 22px;
+    margin-bottom: 5px;
+}
+
+/* Smaller Text */
 .symptom-title {
-    font-size: 18px;
+    font-size: 15px;
     font-weight: 600;
     color: #1e3a8a;
 }
 
-/* Description */
 .symptom-desc {
-    font-size: 13px;
+    font-size: 11px;
     color: #6b7280;
 }
 
@@ -100,7 +99,7 @@ Features:
 - Symptom Analysis
 - AI Suggestions
 - Emergency Alerts
-- Follow-up Questions
+- Nearby Hospital Guidance
 """)
 
     st.warning("⚠️ Educational use only")
@@ -137,131 +136,35 @@ Features:
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# ---------------- QUICK SYMPTOM TITLE ----------------
+# ---------------- QUICK SYMPTOMS ----------------
 st.markdown("""
-<h2 style='color:#2563eb;'>
-⚡ Quick Symptom Checker
-</h2>
+<h3 style='color:#2563eb;'>
+⚡ Quick Symptoms
+</h3>
 """, unsafe_allow_html=True)
 
-# ---------------- SYMPTOM CARDS ----------------
+# SINGLE ROW QUICK BUTTONS
+col1, col2, col3, col4, col5, col6 = st.columns(6)
 
-row1_col1, row1_col2, row1_col3 = st.columns(3)
+with col1:
+    fever_btn = st.button("🤒 Fever")
 
-# Fever
-with row1_col1:
+with col2:
+    cough_btn = st.button("🤧 Cough")
 
-    st.markdown("""
-    <div class="symptom-card">
-        <div class="symptom-emoji">🤒</div>
-        <div class="symptom-title">Fever</div>
-        <div class="symptom-desc">
-            High temperature & weakness
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+with col3:
+    headache_btn = st.button("💊 Headache")
 
-    fever_btn = st.button(
-        "Check Fever",
-        use_container_width=True
-    )
+with col4:
+    chest_btn = st.button("🫀 Chest Pain")
 
-# Cough
-with row1_col2:
+with col5:
+    vomiting_btn = st.button("🤢 Vomiting")
 
-    st.markdown("""
-    <div class="symptom-card">
-        <div class="symptom-emoji">🤧</div>
-        <div class="symptom-title">Cough</div>
-        <div class="symptom-desc">
-            Cold & throat irritation
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    cough_btn = st.button(
-        "Check Cough",
-        use_container_width=True
-    )
-
-# Headache
-with row1_col3:
-
-    st.markdown("""
-    <div class="symptom-card">
-        <div class="symptom-emoji">💊</div>
-        <div class="symptom-title">Headache</div>
-        <div class="symptom-desc">
-            Stress & migraine
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    headache_btn = st.button(
-        "Check Headache",
-        use_container_width=True
-    )
-
-# ---------------- SECOND ROW ----------------
-
-row2_col1, row2_col2, row2_col3 = st.columns(3)
-
-# Chest Pain
-with row2_col1:
-
-    st.markdown("""
-    <div class="symptom-card">
-        <div class="symptom-emoji">🫀</div>
-        <div class="symptom-title">Chest Pain</div>
-        <div class="symptom-desc">
-            Heart discomfort symptoms
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    chest_btn = st.button(
-        "Check Chest Pain",
-        use_container_width=True
-    )
-
-# Vomiting
-with row2_col2:
-
-    st.markdown("""
-    <div class="symptom-card">
-        <div class="symptom-emoji">🤢</div>
-        <div class="symptom-title">Vomiting</div>
-        <div class="symptom-desc">
-            Nausea & stomach issues
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    vomiting_btn = st.button(
-        "Check Vomiting",
-        use_container_width=True
-    )
-
-# Dizziness
-with row2_col3:
-
-    st.markdown("""
-    <div class="symptom-card">
-        <div class="symptom-emoji">😵</div>
-        <div class="symptom-title">Dizziness</div>
-        <div class="symptom-desc">
-            Weakness & balance issues
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    dizziness_btn = st.button(
-        "Check Dizziness",
-        use_container_width=True
-    )
+with col6:
+    dizziness_btn = st.button("😵 Dizziness")
 
 # ---------------- QUICK INPUT ----------------
-
 user_input = None
 
 if fever_btn:
@@ -283,15 +186,17 @@ elif dizziness_btn:
     user_input = "I feel dizziness"
 
 # ---------------- CHAT DISPLAY ----------------
+chat_container = st.container()
 
-for msg in st.session_state.messages:
+with chat_container:
 
-    with st.chat_message(msg["role"]):
+    for msg in st.session_state.messages:
 
-        st.markdown(msg["content"])
+        with st.chat_message(msg["role"]):
+
+            st.markdown(msg["content"])
 
 # ---------------- TYPING EFFECT ----------------
-
 def typing_effect(text):
 
     placeholder = st.empty()
@@ -307,7 +212,6 @@ def typing_effect(text):
         time.sleep(0.01)
 
 # ---------------- CHAT INPUT ----------------
-
 chat_input = st.chat_input(
     "Describe your symptoms..."
 )
@@ -316,36 +220,51 @@ if chat_input:
     user_input = chat_input
 
 # ---------------- PROCESS ----------------
-
 if user_input:
 
-    # Show User Message
+    # USER MESSAGE
     with st.chat_message("user"):
 
         st.markdown(f"👤 {user_input}")
 
-    # Store User Message
     st.session_state.messages.append({
         "role": "user",
         "content": f"👤 {user_input}"
     })
 
-    # Emergency Alert
-    emergency_keywords = [
+    # EMERGENCY DETECTION
+    critical_keywords = [
         "chest pain",
-        "breathing",
         "heart attack",
-        "blood"
+        "breathing problem",
+        "difficulty breathing"
     ]
 
-    if any(word in user_input.lower()
-           for word in emergency_keywords):
+    critical_case = any(
+        word in user_input.lower()
+        for word in critical_keywords
+    )
+
+    # SHOW EMERGENCY ALERT
+    if critical_case:
 
         st.error(
-            "🚨 Seek immediate medical attention!"
+            "🚨 Critical Condition Detected!"
         )
 
-    # Assistant Message
+        st.warning("""
+📞 Emergency Helpline: 108
+
+🏥 Please visit the nearest hospital immediately.
+""")
+
+        st.markdown("""
+### 🏥 Nearby Healthcare Support
+
+[🔗 Open Google Maps Hospitals Nearby](https://www.google.com/maps/search/hospitals+near+me)
+""")
+
+    # ASSISTANT RESPONSE
     with st.chat_message("assistant"):
 
         with st.spinner(
@@ -369,27 +288,22 @@ if user_input:
         # Typing Animation
         typing_effect(final_reply)
 
-        # Show severity only for important symptoms
+        # Severity Alerts
         if "chest pain" in user_input.lower():
 
             st.error("🔴 Critical Severity")
-
-        elif "breathing" in user_input.lower():
-
-            st.error("🚨 Breathing issue detected")
 
         elif "fever" in user_input.lower():
 
             st.warning("🟠 Moderate Severity")
 
-    # Store Assistant Message
+    # STORE RESPONSE
     st.session_state.messages.append({
         "role": "assistant",
         "content": final_reply
     })
 
 # ---------------- FOOTER ----------------
-
 st.markdown("---")
 
 st.caption(
