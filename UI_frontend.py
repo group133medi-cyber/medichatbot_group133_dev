@@ -222,14 +222,22 @@ if chat_input:
 # ---------------- PROCESS ----------------
 if user_input:
 
+    # ADD TEMPERATURE TO MESSAGE
+    user_message = f"""
+🩺 Symptom: {user_input}
+
+🌡️ Body Temperature: {temperature}°C
+"""
+
     # USER MESSAGE
     with st.chat_message("user"):
 
-        st.markdown(f"👤 {user_input}")
+        st.markdown(user_message)
 
+    # STORE USER MESSAGE
     st.session_state.messages.append({
         "role": "user",
-        "content": f"👤 {user_input}"
+        "content": user_message
     })
 
     # EMERGENCY DETECTION
@@ -288,14 +296,23 @@ if user_input:
         # Typing Animation
         typing_effect(final_reply)
 
-        # Severity Alerts
+        # TEMPERATURE SEVERITY ALERT
+        if temperature > 39:
+
+            st.error("🔴 High Fever Severity")
+
+        elif temperature > 37.5:
+
+            st.warning("🟠 Mild Fever Severity")
+
+        else:
+
+            st.success("🟢 Temperature Looks Normal")
+
+        # CHEST PAIN ALERT
         if "chest pain" in user_input.lower():
 
-            st.error("🔴 Critical Severity")
-
-        elif "fever" in user_input.lower():
-
-            st.warning("🟠 Moderate Severity")
+            st.error("🚨 Critical Severity")
 
     # STORE RESPONSE
     st.session_state.messages.append({
