@@ -222,11 +222,19 @@ if chat_input:
 # ---------------- PROCESS ----------------
 if user_input:
 
-    # ADD TEMPERATURE TO MESSAGE
-    user_message = f"""
+    # SHOW TEMPERATURE ONLY FOR FEVER
+    if "fever" in user_input.lower():
+
+        user_message = f"""
 🩺 Symptom: {user_input}
 
 🌡️ Body Temperature: {temperature}°C
+"""
+
+    else:
+
+        user_message = f"""
+🩺 Symptom: {user_input}
 """
 
     # USER MESSAGE
@@ -296,18 +304,20 @@ if user_input:
         # Typing Animation
         typing_effect(final_reply)
 
-        # TEMPERATURE SEVERITY ALERT
-        if temperature > 39:
+        # FEVER ALERTS
+        if "fever" in user_input.lower():
 
-            st.error("🔴 High Fever Severity")
+            if temperature > 39:
 
-        elif temperature > 37.5:
+                st.error("🔴 High Fever Severity")
 
-            st.warning("🟠 Mild Fever Severity")
+            elif temperature > 37.5:
 
-        else:
+                st.warning("🟠 Mild Fever Severity")
 
-            st.success("🟢 Temperature Looks Normal")
+            else:
+
+                st.success("🟢 Temperature Looks Normal")
 
         # CHEST PAIN ALERT
         if "chest pain" in user_input.lower():
