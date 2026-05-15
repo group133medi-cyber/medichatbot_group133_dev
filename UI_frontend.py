@@ -31,12 +31,11 @@ st.markdown("""
     background: linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%);
 }
 
-/* REMOVE STREAMLIT HEADER */
+/* REMOVE STREAMLIT DEFAULTS */
 header {
     visibility: hidden;
 }
 
-/* REMOVE FOOTER */
 footer {
     visibility: hidden;
 }
@@ -45,18 +44,12 @@ footer {
 h1 {
     color: #1e3a8a;
     font-weight: 700;
-    letter-spacing: 0.5px;
 }
 
 /* SIDEBAR */
 section[data-testid="stSidebar"] {
     background: #ffffff;
     border-right: 1px solid #dbeafe;
-}
-
-/* SIDEBAR TEXT */
-section[data-testid="stSidebar"] * {
-    color: #1e293b;
 }
 
 /* CHAT MESSAGE */
@@ -94,26 +87,9 @@ section[data-testid="stSidebar"] * {
     color: white;
 }
 
-/* CHAT HISTORY BUTTONS */
-.chat-history button {
-    background: #f8fafc !important;
-    color: #1e293b !important;
-    border: 1px solid #e2e8f0 !important;
-    text-align: left !important;
-}
-
-.chat-history button:hover {
-    background: #dbeafe !important;
-}
-
 /* CHAT INPUT */
 [data-testid="stChatInput"] {
     border-radius: 16px;
-}
-
-/* INFO BOX */
-[data-testid="stAlert"] {
-    border-radius: 14px;
 }
 
 </style>
@@ -131,7 +107,7 @@ with st.sidebar:
     st.info("""
 ✔ AI Symptom Analysis  
 ✔ Emergency Detection  
-✔ Fever Monitoring  
+✔ Nearby Healthcare Support  
 ✔ Smart Chat History
 """)
 
@@ -146,9 +122,9 @@ with st.sidebar:
 
     st.markdown("---")
 
+    # ---------------- CHAT HISTORY ----------------
     st.markdown("### 💬 Recent Conversations")
 
-    # ---------------- CHAT HISTORY ----------------
     for chat_id, messages in reversed(
         list(st.session_state.chat_sessions.items())
     ):
@@ -163,10 +139,7 @@ with st.sidebar:
                 else first_message
             )
 
-            if st.button(
-                preview,
-                key=chat_id
-            ):
+            if st.button(preview, key=chat_id):
 
                 st.session_state.current_chat = chat_id
 
@@ -246,7 +219,7 @@ elif vomiting_btn:
 elif dizziness_btn:
     user_input = "I feel dizziness"
 
-# ---------------- CHAT DISPLAY ----------------
+# ---------------- DISPLAY CHAT ----------------
 for msg in st.session_state.messages:
 
     with st.chat_message(msg["role"]):
@@ -279,7 +252,7 @@ if chat_input:
 # ---------------- PROCESS ----------------
 if user_input:
 
-    # TEMPERATURE ONLY FOR FEVER
+    # SHOW TEMPERATURE ONLY FOR FEVER
     if "fever" in user_input.lower():
 
         user_message = f"""
@@ -307,7 +280,9 @@ if user_input:
         "chest pain",
         "heart attack",
         "breathing problem",
-        "difficulty breathing"
+        "difficulty breathing",
+        "severe pain",
+        "unconscious"
     ]
 
     critical_case = any(
@@ -323,7 +298,17 @@ if user_input:
         st.warning("""
 📞 Emergency Helpline: 108
 
-🏥 Please visit the nearest hospital immediately.
+🏥 Please visit the nearest healthcare center immediately.
+""")
+
+        st.markdown("""
+### 🏥 Nearby Healthcare Support
+
+🔗 [Find Nearby Hospitals](https://www.google.com/maps/search/hospitals+near+me)
+
+🔗 [Find Nearby Emergency Clinics](https://www.google.com/maps/search/emergency+clinic+near+me)
+
+🔗 [Find Nearby Medical Shops](https://www.google.com/maps/search/medical+shop+near+me)
 """)
 
     # ---------------- AI RESPONSE ----------------
@@ -345,6 +330,7 @@ if user_input:
 
                 print("Backend Error:", e)
 
+        # TYPING EFFECT
         typing_effect(final_reply)
 
         # FEVER ALERTS
@@ -367,7 +353,7 @@ if user_input:
 
             st.error("🚨 Emergency Severity")
 
-    # STORE RESPONSE
+    # STORE ASSISTANT RESPONSE
     st.session_state.messages.append({
         "role": "assistant",
         "content": final_reply
