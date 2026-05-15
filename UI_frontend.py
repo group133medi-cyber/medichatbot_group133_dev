@@ -21,70 +21,77 @@ if "chat_history" not in st.session_state:
 if "current_chat" not in st.session_state:
     st.session_state.current_chat = "Chat 1"
 
-# ---------------- CUSTOM CSS ----------------
+# ---------------- CLEAN MODERN CSS ----------------
 st.markdown("""
 <style>
 
 /* MAIN BACKGROUND */
 .stApp {
-    background-image: url("https://images.unsplash.com/photo-1584982751601-97dcc096659c");
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
+    background: #f6f9fc;
 }
 
-/* WHITE OVERLAY */
-.stApp::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255,255,255,0.82);
-    z-index: -1;
+/* HEADER */
+h1 {
+    color: #1e3a8a;
+    font-weight: 700;
 }
 
 /* SIDEBAR */
 section[data-testid="stSidebar"] {
-    background: rgba(219,234,254,0.75);
-    backdrop-filter: blur(10px);
+    background: #ffffff;
+    border-right: 1px solid #e5e7eb;
 }
 
-/* CHAT MESSAGES */
+/* CHAT CONTAINER */
 [data-testid="stChatMessage"] {
-    background: rgba(255,255,255,0.72);
-    backdrop-filter: blur(10px);
-    border-radius: 18px;
-    padding: 12px;
-    margin-bottom: 10px;
-    border: 1px solid #dbeafe;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 12px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+/* USER MESSAGE */
+[data-testid="stChatMessage"]:has(div[data-testid="chatAvatarIcon-user"]) {
+    background: #dbeafe;
+}
+
+/* ASSISTANT MESSAGE */
+[data-testid="stChatMessage"]:has(div[data-testid="chatAvatarIcon-assistant"]) {
+    background: #ffffff;
 }
 
 /* BUTTONS */
 .stButton > button {
-    border-radius: 12px;
-    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    width: 100%;
+    border-radius: 10px;
+    background: #2563eb;
     color: white;
     border: none;
     padding: 8px 12px;
     font-weight: 600;
-    font-size: 14px;
+    transition: 0.3s;
 }
 
 .stButton > button:hover {
-    background: linear-gradient(135deg, #1d4ed8, #2563eb);
+    background: #1d4ed8;
     color: white;
 }
 
 /* CHAT INPUT */
 [data-testid="stChatInput"] {
-    border-radius: 15px;
+    border-radius: 14px;
 }
 
-/* TITLE */
-h1 {
-    color: #1e3a8a;
+/* QUICK BUTTONS SPACING */
+div[data-testid="column"] {
+    padding: 2px;
+}
+
+/* FOOTER */
+footer {
+    visibility: hidden;
 }
 
 </style>
@@ -105,7 +112,6 @@ Features:
 - AI Suggestions
 - Emergency Alerts
 - Chat History
-- Medical Theme UI
 """)
 
     st.warning("⚠️ Educational use only")
@@ -123,16 +129,18 @@ Features:
 
         st.rerun()
 
+    # ---------------- CHAT HISTORY ----------------
     st.subheader("💬 Chat History")
 
-    # ---------------- CHAT HISTORY ----------------
     for chat_name in st.session_state.chat_history.keys():
 
         if st.button(chat_name):
 
             st.session_state.current_chat = chat_name
 
-            st.session_state.messages = st.session_state.chat_history[chat_name]
+            st.session_state.messages = (
+                st.session_state.chat_history[chat_name]
+            )
 
             st.rerun()
 
@@ -158,7 +166,7 @@ Features:
 
         st.success("🟢 Normal Temperature")
 
-    # ---------------- RESET ----------------
+    # ---------------- CLEAR CHAT ----------------
     if st.button("🗑️ Clear Current Chat"):
 
         st.session_state.messages = []
@@ -176,7 +184,6 @@ st.markdown("""
 </h3>
 """, unsafe_allow_html=True)
 
-# QUICK BUTTONS
 col1, col2, col3, col4, col5, col6 = st.columns(6)
 
 with col1:
@@ -270,7 +277,7 @@ if user_input:
 🩺 Symptom: {user_input}
 """
 
-    # USER CHAT
+    # USER MESSAGE
     with st.chat_message("user"):
 
         st.markdown(user_message)
@@ -281,7 +288,7 @@ if user_input:
         "content": user_message
     })
 
-    # EMERGENCY DETECTION
+    # ---------------- EMERGENCY DETECTION ----------------
     critical_keywords = [
         "chest pain",
         "heart attack",
@@ -294,12 +301,10 @@ if user_input:
         for word in critical_keywords
     )
 
-    # EMERGENCY ALERT
+    # ---------------- EMERGENCY ALERT ----------------
     if critical_case:
 
-        st.error(
-            "🚨 Critical Condition Detected!"
-        )
+        st.error("🚨 Critical Condition Detected!")
 
         st.warning("""
 📞 Emergency Helpline: 108
@@ -313,7 +318,7 @@ if user_input:
 [🔗 Open Google Maps Hospitals Nearby](https://www.google.com/maps/search/hospitals+near+me)
 """)
 
-    # ---------------- ASSISTANT ----------------
+    # ---------------- ASSISTANT RESPONSE ----------------
     with st.chat_message("assistant"):
 
         with st.spinner(
