@@ -12,7 +12,7 @@ client = InferenceClient(
 
 MODEL_NAME = "meta-llama/Llama-3.1-8B-Instruct:fastest"
 
-# ---------------- LOAD MEDICAL DATA ----------------
+# ---------------- LOAD DATA ----------------
 
 base_path = os.path.dirname(__file__)
 
@@ -24,17 +24,20 @@ json_path = os.path.join(
 with open(json_path, "r", encoding="utf-8") as file:
     data = json.load(file)
 
-# ---------------- MAIN CHATBOT FUNCTION ----------------
+# ---------------- SESSION MEMORY ----------------
+
+if "symptom_memory" not in st.session_state:
+    st.session_state.symptom_memory = []
+
+if "pending_followup" not in st.session_state:
+    st.session_state.pending_followup = None
+
+if "followup_answers" not in st.session_state:
+    st.session_state.followup_answers = {}
+
+# ---------------- MAIN RESPONSE FUNCTION ----------------
 
 def get_response(history):
-
-    # ---------------- SYMPTOM MEMORY ----------------
-
-    if "symptom_memory" not in st.session_state:
-
-        st.session_state.symptom_memory = []
-
-    # ---------------- COMBINE USER MESSAGES ----------------
 
     recent_text = " ".join(
         [
@@ -55,7 +58,32 @@ def get_response(history):
 
     emergency_detected = False
 
-    possible_conditions = []
+    condition_scores = {}
+
+    # ---------------- HANDLE FOLLOW-UP ANSWER ----------------
+
+    if st.session_state.pending_followup:
+
+        question_data = st.session_state.pending_followup
+
+        st.session_state.followup_answers[
+            question_data["question"]
+        ] = msg
+
+        for answer_rule in question_data.get(
+            "expected_answers", []
+        ):
+
+            if answer_rule["value"].lower() in msg:
+
+                total_score += answer_rule.get(
+                    "severity_increase", 0
+                )
+
+                if answer_rule.get("emergency"):
+                    emergency_detected = True
+
+        st.session_state.pending_followup = None
 
     # ---------------- SYMPTOM MATCHING ----------------
 
@@ -67,40 +95,74 @@ def get_response(history):
 
                 matched.append(info)
 
-                total_score += info.get("score", 0)
+                total_score += info.get(
+                    "base_score", 0
+                )
 
                 if info.get("emergency"):
-
                     emergency_detected = True
-
-                possible_conditions.extend(
-                    info.get("possible_conditions", [])
-                )
 
                 # SAVE SYMPTOM MEMORY
                 if symptom not in st.session_state.symptom_memory:
 
-                    st.session_state.symptom_memory.append(symptom)
+                    st.session_state.symptom_memory.append(
+                        symptom
+                    )
+
+                # CONDITION WEIGHTS
+                for condition in info.get(
+                    "possible_conditions", []
+                ):
+
+                    name = condition["name"]
+
+                    weight = condition["weight"]
+
+                    condition_scores[name] = (
+                        condition_scores.get(name, 0)
+                        + weight
+                    )
 
                 break
 
     # ---------------- COMBINATION ANALYSIS ----------------
 
-    memory = set(st.session_state.symptom_memory)
+    memory = set(
+        st.session_state.symptom_memory
+    )
 
-    for combo in data["symptom_combinations"]:
+    for combo in data.get(
+        "symptom_combinations", []
+    ):
 
-        combo_symptoms = set(combo["symptoms"])
+        combo_symptoms = set(
+            combo["symptoms"]
+        )
 
         if combo_symptoms.issubset(memory):
 
             combo_matches.append(combo)
 
-            total_score += combo.get("score_bonus", 0)
+            total_score += combo.get(
+                "score_bonus", 0
+            )
 
             if combo.get("emergency"):
 
                 emergency_detected = True
+
+            for condition in combo.get(
+                "possible_conditions", []
+            ):
+
+                name = condition["name"]
+
+                weight = condition["weight"]
+
+                condition_scores[name] = (
+                    condition_scores.get(name, 0)
+                    + weight
+                )
 
     # ---------------- AI FALLBACK ----------------
 
@@ -108,9 +170,9 @@ def get_response(history):
 
         return get_ai_response(history)
 
-    # ---------------- DETERMINE OVERALL SEVERITY ----------------
+    # ---------------- DETERMINE SEVERITY ----------------
 
-    if total_score >= 10:
+    if emergency_detected or total_score >= 10:
 
         overall_severity = "🔴 Critical"
 
@@ -126,37 +188,34 @@ def get_response(history):
 
     if emergency_detected:
 
-        emergency_reply = (
-            "🚨 EMERGENCY SYMPTOMS DETECTED\n\n"
+        reply = (
+            "🚨 Emergency symptoms detected.\n\n"
+        )
+
+        reply += (
+            "Please seek immediate medical attention.\n\n"
         )
 
         for m in matched:
 
             if m.get("emergency"):
 
-                emergency_reply += (
+                reply += (
                     f"⚠️ {m['description']}\n"
+                )
+
+                reply += (
                     f"👉 {m['advice']}\n\n"
                 )
 
-        for combo in combo_matches:
-
-            if combo.get("emergency"):
-
-                emergency_reply += (
-                    f"🧠 {combo['condition']}\n"
-                    f"👉 {combo['advice']}\n\n"
-                )
-
-        emergency_reply += (
-            "Please seek immediate medical attention."
-        )
-
-        return emergency_reply
+        return reply.strip()
 
     # ---------------- BUILD RESPONSE ----------------
 
-    reply = f"📊 Overall Severity: {overall_severity}\n\n"
+    reply = (
+        f"📊 Overall Severity: "
+        f"{overall_severity}\n\n"
+    )
 
     reply += "🩺 Detected Symptoms:\n\n"
 
@@ -170,55 +229,79 @@ def get_response(history):
             f"👉 Advice: {m['advice']}\n\n"
         )
 
-    # ---------------- POSSIBLE CONDITIONS ----------------
+    # ---------------- TOP CONDITIONS ----------------
 
-    unique_conditions = list(
-        set(possible_conditions)
-    )
+    if condition_scores:
 
-    if unique_conditions:
+        sorted_conditions = sorted(
+            condition_scores.items(),
+            key=lambda x: x[1],
+            reverse=True
+        )
 
-        reply += "🧠 Possible Related Conditions:\n\n"
+        reply += (
+            "🧠 Possible Related Conditions:\n\n"
+        )
 
-        for condition in unique_conditions[:5]:
+        for condition, score in sorted_conditions[:5]:
 
-            reply += f"• {condition}\n"
+            confidence = round(score * 100)
+
+            reply += (
+                f"• {condition.replace('_', ' ').title()}"
+                f" ({confidence}% match)\n"
+            )
 
         reply += "\n"
 
-    # ---------------- SYMPTOM COMBINATION OUTPUT ----------------
+    # ---------------- COMBINATION OUTPUT ----------------
 
     if combo_matches:
 
-        reply += "🔍 Symptom Combination Analysis:\n\n"
+        reply += (
+            "🔍 Symptom Combination Analysis:\n\n"
+        )
 
         for combo in combo_matches:
 
             reply += (
-                f"🧠 {combo['condition']}\n"
+                f"• Combination detected: "
+                f"{', '.join(combo['symptoms'])}\n"
             )
 
             reply += (
                 f"👉 {combo['advice']}\n\n"
             )
 
-    # ---------------- FOLLOW-UP QUESTIONS ----------------
+    # ---------------- FOLLOW-UP ENGINE ----------------
 
-    follow_ups = []
+    followup_candidates = []
 
-    for m in matched:
+    for symptom, info in data["symptoms"].items():
 
-        if "follow_up" in m:
+        if symptom in st.session_state.symptom_memory:
 
-            follow_ups.extend(
-                m["follow_up"]
+            followup_candidates.extend(
+                info.get("follow_up_flow", [])
             )
 
-    if follow_ups:
+    if followup_candidates:
 
-        reply += "❓ Follow-up Question:\n\n"
+        selected_question = random.choice(
+            followup_candidates
+        )
 
-        reply += random.choice(follow_ups)
+        st.session_state.pending_followup = (
+            selected_question
+        )
+
+        reply += (
+            "❓ Follow-up Question:\n\n"
+        )
+
+        reply += (
+            selected_question["question"]
+        )
 
     return reply.strip()
 
@@ -236,17 +319,17 @@ def get_ai_response(history):
                 {
                     "role": "system",
                     "content": (
-                        "You are an AI medical assistant chatbot.\n\n"
+                        "You are an AI medical assistant.\n\n"
 
                         "Responsibilities:\n"
                         "- Provide general medical guidance\n"
-                        "- Ask follow-up questions\n"
+                        "- Ask smart follow-up questions\n"
                         "- Explain symptoms clearly\n"
                         "- Never provide prescriptions\n"
                         "- Never claim certainty in diagnosis\n"
-                        "- Advise doctor consultation when needed\n"
+                        "- Recommend professional care when needed\n"
                         "- If symptoms appear severe, "
-                        "recommend immediate medical attention."
+                        "recommend emergency care."
                     )
                 }
             ] + history[-10:]
