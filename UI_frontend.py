@@ -11,35 +11,59 @@ st.set_page_config(
     layout="wide"
 )
 
+# ---------------- SESSION STATE ----------------
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = {}
+
+if "current_chat" not in st.session_state:
+    st.session_state.current_chat = "Chat 1"
+
 # ---------------- CUSTOM CSS ----------------
 st.markdown("""
 <style>
 
-/* Background */
+/* MAIN BACKGROUND */
 .stApp {
-    background-color: #f5f9ff;
+    background-image: url("https://images.unsplash.com/photo-1584982751601-97dcc096659c");
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
 }
 
-/* Sidebar */
+/* WHITE OVERLAY */
+.stApp::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.82);
+    z-index: -1;
+}
+
+/* SIDEBAR */
 section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #dbeafe, #eff6ff);
+    background: rgba(219,234,254,0.75);
+    backdrop-filter: blur(10px);
 }
 
-/* Smooth Scroll */
-html {
-    scroll-behavior: smooth;
-}
-
-/* Chat Messages */
+/* CHAT MESSAGES */
 [data-testid="stChatMessage"] {
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(10px);
     border-radius: 18px;
-    padding: 10px;
+    padding: 12px;
     margin-bottom: 10px;
+    border: 1px solid #dbeafe;
 }
 
-/* Buttons */
+/* BUTTONS */
 .stButton > button {
-    border-radius: 10px;
+    border-radius: 12px;
     background: linear-gradient(135deg, #2563eb, #3b82f6);
     color: white;
     border: none;
@@ -53,33 +77,14 @@ html {
     color: white;
 }
 
-/* Compact Symptom Cards */
-.symptom-card {
-    background: linear-gradient(135deg, #ffffff, #edf4ff);
-    padding: 12px;
-    border-radius: 14px;
-    text-align: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    border: 1px solid #dbeafe;
-    margin-bottom: 8px;
+/* CHAT INPUT */
+[data-testid="stChatInput"] {
+    border-radius: 15px;
 }
 
-/* Smaller Emoji */
-.symptom-emoji {
-    font-size: 22px;
-    margin-bottom: 5px;
-}
-
-/* Smaller Text */
-.symptom-title {
-    font-size: 15px;
-    font-weight: 600;
+/* TITLE */
+h1 {
     color: #1e3a8a;
-}
-
-.symptom-desc {
-    font-size: 11px;
-    color: #6b7280;
 }
 
 </style>
@@ -99,12 +104,39 @@ Features:
 - Symptom Analysis
 - AI Suggestions
 - Emergency Alerts
-- Nearby Hospital Guidance
+- Chat History
+- Medical Theme UI
 """)
 
     st.warning("⚠️ Educational use only")
 
-    # Temperature Meter
+    # ---------------- NEW CHAT ----------------
+    if st.button("➕ New Chat"):
+
+        new_chat_name = f"Chat {len(st.session_state.chat_history) + 1}"
+
+        st.session_state.chat_history[new_chat_name] = []
+
+        st.session_state.current_chat = new_chat_name
+
+        st.session_state.messages = []
+
+        st.rerun()
+
+    st.subheader("💬 Chat History")
+
+    # ---------------- CHAT HISTORY ----------------
+    for chat_name in st.session_state.chat_history.keys():
+
+        if st.button(chat_name):
+
+            st.session_state.current_chat = chat_name
+
+            st.session_state.messages = st.session_state.chat_history[chat_name]
+
+            st.rerun()
+
+    # ---------------- TEMPERATURE ----------------
     st.subheader("🌡️ Body Temperature")
 
     temperature = st.slider(
@@ -126,15 +158,16 @@ Features:
 
         st.success("🟢 Normal Temperature")
 
-    # Reset Button
-    if st.button("🗑️ Reset Chat"):
+    # ---------------- RESET ----------------
+    if st.button("🗑️ Clear Current Chat"):
 
         st.session_state.messages = []
-        st.rerun()
 
-# ---------------- SESSION ----------------
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+        st.session_state.chat_history[
+            st.session_state.current_chat
+        ] = []
+
+        st.rerun()
 
 # ---------------- QUICK SYMPTOMS ----------------
 st.markdown("""
@@ -143,7 +176,7 @@ st.markdown("""
 </h3>
 """, unsafe_allow_html=True)
 
-# SINGLE ROW QUICK BUTTONS
+# QUICK BUTTONS
 col1, col2, col3, col4, col5, col6 = st.columns(6)
 
 with col1:
@@ -164,7 +197,7 @@ with col5:
 with col6:
     dizziness_btn = st.button("😵 Dizziness")
 
-# ---------------- QUICK INPUT ----------------
+# ---------------- USER INPUT ----------------
 user_input = None
 
 if fever_btn:
@@ -185,7 +218,7 @@ elif vomiting_btn:
 elif dizziness_btn:
     user_input = "I feel dizziness"
 
-# ---------------- CHAT DISPLAY ----------------
+# ---------------- DISPLAY CHAT ----------------
 chat_container = st.container()
 
 with chat_container:
@@ -237,7 +270,7 @@ if user_input:
 🩺 Symptom: {user_input}
 """
 
-    # USER MESSAGE
+    # USER CHAT
     with st.chat_message("user"):
 
         st.markdown(user_message)
@@ -261,7 +294,7 @@ if user_input:
         for word in critical_keywords
     )
 
-    # SHOW EMERGENCY ALERT
+    # EMERGENCY ALERT
     if critical_case:
 
         st.error(
@@ -271,16 +304,16 @@ if user_input:
         st.warning("""
 📞 Emergency Helpline: 108
 
-🏥 Please visit the nearest hospital immediately.
+🏥 Please visit nearest hospital immediately.
 """)
 
         st.markdown("""
-### 🏥 Nearby Healthcare Support
+### 🏥 Nearby Hospitals
 
 [🔗 Open Google Maps Hospitals Nearby](https://www.google.com/maps/search/hospitals+near+me)
 """)
 
-    # ASSISTANT RESPONSE
+    # ---------------- ASSISTANT ----------------
     with st.chat_message("assistant"):
 
         with st.spinner(
@@ -301,7 +334,7 @@ if user_input:
 
                 print("Backend Error:", e)
 
-        # Typing Animation
+        # TYPING EFFECT
         typing_effect(final_reply)
 
         # FEVER ALERTS
@@ -324,11 +357,16 @@ if user_input:
 
             st.error("🚨 Critical Severity")
 
-    # STORE RESPONSE
+    # STORE ASSISTANT RESPONSE
     st.session_state.messages.append({
         "role": "assistant",
         "content": final_reply
     })
+
+    # SAVE CHAT HISTORY
+    st.session_state.chat_history[
+        st.session_state.current_chat
+    ] = st.session_state.messages
 
 # ---------------- FOOTER ----------------
 st.markdown("---")
