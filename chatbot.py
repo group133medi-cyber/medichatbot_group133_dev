@@ -1,10 +1,11 @@
 import json
 import os
-import random
 import streamlit as st
 from huggingface_hub import InferenceClient
 
-# ---------------- HUGGING FACE CLIENT ----------------
+# =========================================================
+# HUGGING FACE CLIENT
+# =========================================================
 
 client = InferenceClient(
     api_key=st.secrets["HF_TOKEN"]
@@ -12,7 +13,9 @@ client = InferenceClient(
 
 MODEL_NAME = "meta-llama/Llama-3.1-8B-Instruct:fastest"
 
-# ---------------- LOAD MEDICAL DATA ----------------
+# =========================================================
+# LOAD MEDICAL DATA
+# =========================================================
 
 base_path = os.path.dirname(__file__)
 
@@ -24,40 +27,191 @@ json_path = os.path.join(
 with open(json_path, "r", encoding="utf-8") as file:
     data = json.load(file)
 
-# ---------------- MAIN CHATBOT FUNCTION ----------------
+# =========================================================
+# SESSION MEMORY
+# =========================================================
+
+if "symptom_memory" not in st.session_state:
+    st.session_state.symptom_memory = []
+
+if "asked_followups" not in st.session_state:
+    st.session_state.asked_followups = []
+
+if "current_followup" not in st.session_state:
+    st.session_state.current_followup = None
+
+if "followup_answers" not in st.session_state:
+    st.session_state.followup_answers = {}
+
+if "condition_scores" not in st.session_state:
+    st.session_state.condition_scores = {}
+
+# NEW: persistent severity score
+if "total_score" not in st.session_state:
+    st.session_state.total_score = 0
+
+# =========================================================
+# MAIN CHATBOT FUNCTION
+# =========================================================
 
 def get_response(history):
 
-    # ---------------- SYMPTOM MEMORY ----------------
+    # -----------------------------------------------------
+    # LATEST USER MESSAGE
+    # -----------------------------------------------------
 
-    if "symptom_memory" not in st.session_state:
-
-        st.session_state.symptom_memory = []
-
-    # ---------------- COMBINE USER MESSAGES ----------------
-
-    recent_text = " ".join(
-        [
-            h["content"]
-            for h in history
-            if isinstance(h, dict)
-            and h.get("role") == "user"
-        ]
-    )
-
-    msg = recent_text.lower()
+    msg = history[-1]["content"].lower().strip()
 
     matched = []
 
     combo_matches = []
 
-    total_score = 0
-
     emergency_detected = False
 
-    possible_conditions = []
+    # =====================================================
+    # FOLLOW-UP ANSWER ANALYSIS
+    # =====================================================
 
-    # ---------------- SYMPTOM MATCHING ----------------
+    if st.session_state.current_followup:
+
+        flow = st.session_state.current_followup
+
+        question_id = flow.get("id")
+
+        st.session_state.followup_answers[
+            question_id
+        ] = msg
+
+        # -------------------------------------------------
+        # OLD RULE SYSTEM
+        # -------------------------------------------------
+
+        for rule in flow.get("rules", []):
+
+            for keyword in rule.get("keywords", []):
+
+                if keyword.lower() in msg:
+
+                    st.session_state.total_score += rule.get(
+                        "increase_score",
+                        0
+                    )
+
+                    if rule.get("emergency"):
+                        emergency_detected = True
+
+        # -------------------------------------------------
+        # NEW SEVERITY RULE SYSTEM
+        # -------------------------------------------------
+
+        user_input = msg.strip().lower()
+
+        for rule in flow.get("severity_rules", []):
+
+            condition = rule.get("condition", "")
+            score_change = rule.get(
+                "score_change",
+                0
+            )
+
+            matched_rule = False
+
+            # BOOLEAN YES/NO
+
+            if (
+                condition == "yes"
+                and "yes" in user_input
+            ):
+                matched_rule = True
+
+            # >=
+
+            elif condition.startswith(">="):
+
+                try:
+
+                    value = float(user_input)
+
+                    limit = float(
+                        condition.replace(">=", "").strip()
+                    )
+
+                    if value >= limit:
+                        matched_rule = True
+
+                except:
+                    pass
+
+            # <=
+
+            elif condition.startswith("<="):
+
+                try:
+
+                    value = float(user_input)
+
+                    limit = float(
+                        condition.replace("<=", "").strip()
+                    )
+
+                    if value <= limit:
+                        matched_rule = True
+
+                except:
+                    pass
+
+            # >
+
+            elif condition.startswith(">"):
+
+                try:
+
+                    value = float(user_input)
+
+                    limit = float(
+                        condition.replace(">", "").strip()
+                    )
+
+                    if value > limit:
+                        matched_rule = True
+
+                except:
+                    pass
+
+            # <
+
+            elif condition.startswith("<"):
+
+                try:
+
+                    value = float(user_input)
+
+                    limit = float(
+                        condition.replace("<", "").strip()
+                    )
+
+                    if value < limit:
+                        matched_rule = True
+
+                except:
+                    pass
+
+            # APPLY RULE
+
+            if matched_rule:
+
+                st.session_state.total_score += score_change
+
+                if rule.get("emergency"):
+                    emergency_detected = True
+
+        # CLEAR ACTIVE FOLLOW-UP
+
+        st.session_state.current_followup = None
+
+    # =====================================================
+    # SYMPTOM MATCHING
+    # =====================================================
 
     for symptom, info in data["symptoms"].items():
 
@@ -65,56 +219,117 @@ def get_response(history):
 
             if keyword.lower() in msg:
 
-                matched.append(info)
+                # avoid duplicate matches
 
-                total_score += info.get("score", 0)
-
-                if info.get("emergency"):
-
-                    emergency_detected = True
-
-                possible_conditions.extend(
-                    info.get("possible_conditions", [])
+                already_exists = any(
+                    m["name"] == symptom
+                    for m in matched
                 )
 
-                # SAVE SYMPTOM MEMORY
-                if symptom not in st.session_state.symptom_memory:
+                if not already_exists:
 
-                    st.session_state.symptom_memory.append(symptom)
+                    matched.append({
+                        "name": symptom,
+                        "info": info
+                    })
+
+                    st.session_state.total_score += info.get(
+                        "score",
+                        0
+                    )
+
+                    if info.get("emergency"):
+                        emergency_detected = True
+
+                    # SAVE SYMPTOM MEMORY
+
+                    if (
+                        symptom
+                        not in st.session_state.symptom_memory
+                    ):
+
+                        st.session_state.symptom_memory.append(
+                            symptom
+                        )
+
+                    # CONDITION SCORING
+
+                    for condition in info.get(
+                        "possible_conditions",
+                        []
+                    ):
+
+                        st.session_state.condition_scores[
+                            condition
+                        ] = (
+                            st.session_state.condition_scores.get(
+                                condition,
+                                0
+                            ) + 1
+                        )
 
                 break
 
-    # ---------------- COMBINATION ANALYSIS ----------------
+    # =====================================================
+    # SYMPTOM COMBINATION ANALYSIS
+    # =====================================================
 
-    memory = set(st.session_state.symptom_memory)
+    memory = set(
+        st.session_state.symptom_memory
+    )
 
-    for combo in data["symptom_combinations"]:
+    for combo in data.get(
+        "symptom_combinations",
+        []
+    ):
 
-        combo_symptoms = set(combo["symptoms"])
+        combo_set = set(combo["symptoms"])
 
-        if combo_symptoms.issubset(memory):
+        if combo_set.issubset(memory):
 
             combo_matches.append(combo)
 
-            total_score += combo.get("score_bonus", 0)
+            st.session_state.total_score += combo.get(
+                "score_bonus",
+                0
+            )
 
             if combo.get("emergency"):
-
                 emergency_detected = True
 
-    # ---------------- AI FALLBACK ----------------
+            condition = combo.get("condition")
+
+            if condition:
+
+                st.session_state.condition_scores[
+                    condition
+                ] = (
+                    st.session_state.condition_scores.get(
+                        condition,
+                        0
+                    ) + 2
+                )
+
+    # =====================================================
+    # AI FALLBACK
+    # =====================================================
 
     if not matched and not combo_matches:
 
         return get_ai_response(history)
 
-    # ---------------- DETERMINE OVERALL SEVERITY ----------------
+    # =====================================================
+    # DETERMINE SEVERITY
+    # =====================================================
 
-    if total_score >= 10:
+    if (
+        emergency_detected
+        or st.session_state.total_score >= 10
+    ):
 
         overall_severity = "🔴 Critical"
 
-    elif total_score >= 5:
+    elif st.session_state.total_score >= 5:
 
         overall_severity = "🟠 Moderate"
 
@@ -122,7 +337,9 @@ def get_response(history):
 
         overall_severity = "🟢 Mild"
 
-    # ---------------- EMERGENCY RESPONSE ----------------
+    # =====================================================
+    # EMERGENCY RESPONSE
+    # =====================================================
 
     if emergency_detected:
 
@@ -130,13 +347,22 @@ def get_response(history):
             "🚨 EMERGENCY SYMPTOMS DETECTED\n\n"
         )
 
+        emergency_reply += (
+            "Please seek immediate medical attention.\n\n"
+        )
+
         for m in matched:
 
-            if m.get("emergency"):
+            info = m["info"]
+
+            if info.get("emergency"):
 
                 emergency_reply += (
-                    f"⚠️ {m['description']}\n"
-                    f"👉 {m['advice']}\n\n"
+                    f"⚠️ {info['description']}\n"
+                )
+
+                emergency_reply += (
+                    f"👉 {info['advice']}\n\n"
                 )
 
         for combo in combo_matches:
@@ -145,52 +371,82 @@ def get_response(history):
 
                 emergency_reply += (
                     f"🧠 {combo['condition']}\n"
+                )
+
+                emergency_reply += (
                     f"👉 {combo['advice']}\n\n"
                 )
 
-        emergency_reply += (
-            "Please seek immediate medical attention."
-        )
+        return emergency_reply.strip()
 
-        return emergency_reply
+    # =====================================================
+    # BUILD RESPONSE
+    # =====================================================
 
-    # ---------------- BUILD RESPONSE ----------------
-
-    reply = f"📊 Overall Severity: {overall_severity}\n\n"
-
-    reply += "🩺 Detected Symptoms:\n\n"
-
-    for m in matched:
-
-        reply += (
-            f"• {m['description']}\n"
-        )
-
-        reply += (
-            f"👉 Advice: {m['advice']}\n\n"
-        )
-
-    # ---------------- POSSIBLE CONDITIONS ----------------
-
-    unique_conditions = list(
-        set(possible_conditions)
+    reply = (
+        f"📊 Overall Severity: "
+        f"{overall_severity}\n\n"
     )
 
-    if unique_conditions:
+    # -----------------------------------------------------
+    # DETECTED SYMPTOMS
+    # -----------------------------------------------------
 
-        reply += "🧠 Possible Related Conditions:\n\n"
+    if matched:
 
-        for condition in unique_conditions[:5]:
+        reply += "🩺 Detected Symptoms:\n\n"
 
-            reply += f"• {condition}\n"
+        for m in matched:
+
+            info = m["info"]
+
+            reply += (
+                f"• {info['description']}\n"
+            )
+
+            reply += (
+                f"👉 Advice: {info['advice']}\n\n"
+            )
+
+    # -----------------------------------------------------
+    # POSSIBLE CONDITIONS
+    # -----------------------------------------------------
+
+    if st.session_state.condition_scores:
+
+        reply += (
+            "🧠 Possible Related Conditions:\n\n"
+        )
+
+        sorted_conditions = sorted(
+            st.session_state.condition_scores.items(),
+            key=lambda x: x[1],
+            reverse=True
+        )
+
+        for condition, score in sorted_conditions[:5]:
+
+            confidence = min(
+                95,
+                score * 20
+            )
+
+            reply += (
+                f"• {condition}"
+                f" ({confidence}% match)\n"
+            )
 
         reply += "\n"
 
-    # ---------------- SYMPTOM COMBINATION OUTPUT ----------------
+    # -----------------------------------------------------
+    # COMBINATION ANALYSIS
+    # -----------------------------------------------------
 
     if combo_matches:
 
-        reply += "🔍 Symptom Combination Analysis:\n\n"
+        reply += (
+            "🔍 Symptom Combination Analysis:\n\n"
+        )
 
         for combo in combo_matches:
 
@@ -202,27 +458,62 @@ def get_response(history):
                 f"👉 {combo['advice']}\n\n"
             )
 
-    # ---------------- FOLLOW-UP QUESTIONS ----------------
+    # =====================================================
+    # SMART FOLLOW-UP ENGINE
+    # =====================================================
 
-    follow_ups = []
+    next_question = None
 
     for m in matched:
 
-        if "follow_up" in m:
+        info = m["info"]
 
-            follow_ups.extend(
-                m["follow_up"]
-            )
+        followups = info.get(
+            "follow_up_flow",
+            []
+        )
 
-    if follow_ups:
+        for flow in followups:
 
-        reply += "❓ Follow-up Question:\n\n"
+            if (
+                flow["id"]
+                not in st.session_state.asked_followups
+            ):
 
-        reply += random.choice(follow_ups)
+                next_question = flow
+
+                st.session_state.asked_followups.append(
+                    flow["id"]
+                )
+
+                break
+
+        if next_question:
+            break
+
+    # =====================================================
+    # ASK FOLLOW-UP QUESTION
+    # =====================================================
+
+    if next_question:
+
+        st.session_state.current_followup = (
+            next_question
+        )
+
+        reply += (
+            "❓ Follow-up Question:\n\n"
+        )
+
+        reply += (
+            next_question["question"]
+        )
 
     return reply.strip()
 
-# ---------------- AI FALLBACK ----------------
+# =========================================================
+# AI FALLBACK
+# =========================================================
 
 def get_ai_response(history):
 
@@ -240,13 +531,12 @@ def get_ai_response(history):
 
                         "Responsibilities:\n"
                         "- Provide general medical guidance\n"
-                        "- Ask follow-up questions\n"
+                        "- Ask intelligent follow-up questions\n"
                         "- Explain symptoms clearly\n"
                         "- Never provide prescriptions\n"
                         "- Never claim certainty in diagnosis\n"
-                        "- Advise doctor consultation when needed\n"
-                        "- If symptoms appear severe, "
-                        "recommend immediate medical attention."
+                        "- Recommend doctor consultation when needed\n"
+                        "- Recommend emergency care for severe symptoms."
                     )
                 }
             ] + history[-10:]
