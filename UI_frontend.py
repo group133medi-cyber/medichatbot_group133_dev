@@ -1,5 +1,6 @@
 import streamlit as st
 import time
+from datetime import datetime
 
 # IMPORT BACKEND FUNCTION
 from chatbot import get_response
@@ -15,40 +16,55 @@ st.set_page_config(
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = {}
+if "chat_sessions" not in st.session_state:
+    st.session_state.chat_sessions = {}
 
 if "current_chat" not in st.session_state:
-    st.session_state.current_chat = "Chat 1"
+    st.session_state.current_chat = None
 
-# ---------------- CLEAN MODERN CSS ----------------
+# ---------------- CLEAN MEDICAL THEME ----------------
 st.markdown("""
 <style>
 
-/* MAIN BACKGROUND */
+/* APP BACKGROUND */
 .stApp {
-    background: #f6f9fc;
+    background: linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%);
 }
 
-/* HEADER */
+/* REMOVE STREAMLIT HEADER */
+header {
+    visibility: hidden;
+}
+
+/* REMOVE FOOTER */
+footer {
+    visibility: hidden;
+}
+
+/* MAIN TITLE */
 h1 {
     color: #1e3a8a;
     font-weight: 700;
+    letter-spacing: 0.5px;
 }
 
 /* SIDEBAR */
 section[data-testid="stSidebar"] {
     background: #ffffff;
-    border-right: 1px solid #e5e7eb;
+    border-right: 1px solid #dbeafe;
 }
 
-/* CHAT CONTAINER */
+/* SIDEBAR TEXT */
+section[data-testid="stSidebar"] * {
+    color: #1e293b;
+}
+
+/* CHAT MESSAGE */
 [data-testid="stChatMessage"] {
-    background: #ffffff;
-    border-radius: 16px;
+    border-radius: 18px;
     padding: 14px;
-    margin-bottom: 12px;
-    border: 1px solid #e5e7eb;
+    margin-bottom: 14px;
+    border: 1px solid #e2e8f0;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
@@ -64,12 +80,11 @@ section[data-testid="stSidebar"] {
 
 /* BUTTONS */
 .stButton > button {
-    width: 100%;
-    border-radius: 10px;
+    border-radius: 12px;
     background: #2563eb;
     color: white;
     border: none;
-    padding: 8px 12px;
+    padding: 10px;
     font-weight: 600;
     transition: 0.3s;
 }
@@ -79,19 +94,26 @@ section[data-testid="stSidebar"] {
     color: white;
 }
 
+/* CHAT HISTORY BUTTONS */
+.chat-history button {
+    background: #f8fafc !important;
+    color: #1e293b !important;
+    border: 1px solid #e2e8f0 !important;
+    text-align: left !important;
+}
+
+.chat-history button:hover {
+    background: #dbeafe !important;
+}
+
 /* CHAT INPUT */
 [data-testid="stChatInput"] {
+    border-radius: 16px;
+}
+
+/* INFO BOX */
+[data-testid="stAlert"] {
     border-radius: 14px;
-}
-
-/* QUICK BUTTONS SPACING */
-div[data-testid="column"] {
-    padding: 2px;
-}
-
-/* FOOTER */
-footer {
-    visibility: hidden;
 }
 
 </style>
@@ -99,56 +121,66 @@ footer {
 
 # ---------------- HEADER ----------------
 st.title("🩺 MediCare AI")
-st.caption("💬 Smart Medical Assistant with AI Logic")
+st.caption("Smart Healthcare Assistant with AI")
 
 # ---------------- SIDEBAR ----------------
 with st.sidebar:
 
-    st.header("🩺 MediCare AI")
+    st.markdown("## 🩺 MediCare AI")
 
     st.info("""
-Features:
-- Symptom Analysis
-- AI Suggestions
-- Emergency Alerts
-- Chat History
+✔ AI Symptom Analysis  
+✔ Emergency Detection  
+✔ Fever Monitoring  
+✔ Smart Chat History
 """)
 
-    st.warning("⚠️ Educational use only")
-
     # ---------------- NEW CHAT ----------------
-    if st.button("➕ New Chat"):
-
-        new_chat_name = f"Chat {len(st.session_state.chat_history) + 1}"
-
-        st.session_state.chat_history[new_chat_name] = []
-
-        st.session_state.current_chat = new_chat_name
+    if st.button("➕ New Conversation"):
 
         st.session_state.messages = []
 
+        st.session_state.current_chat = None
+
         st.rerun()
 
+    st.markdown("---")
+
+    st.markdown("### 💬 Recent Conversations")
+
     # ---------------- CHAT HISTORY ----------------
-    st.subheader("💬 Chat History")
+    for chat_id, messages in reversed(
+        list(st.session_state.chat_sessions.items())
+    ):
 
-    for chat_name in st.session_state.chat_history.keys():
+        if len(messages) > 0:
 
-        if st.button(chat_name):
+            first_message = messages[0]["content"]
 
-            st.session_state.current_chat = chat_name
-
-            st.session_state.messages = (
-                st.session_state.chat_history[chat_name]
+            preview = (
+                first_message[:30] + "..."
+                if len(first_message) > 30
+                else first_message
             )
 
-            st.rerun()
+            if st.button(
+                preview,
+                key=chat_id
+            ):
+
+                st.session_state.current_chat = chat_id
+
+                st.session_state.messages = messages
+
+                st.rerun()
+
+    st.markdown("---")
 
     # ---------------- TEMPERATURE ----------------
-    st.subheader("🌡️ Body Temperature")
+    st.markdown("### 🌡️ Body Temperature")
 
     temperature = st.slider(
-        "Select Temperature (°C)",
+        "Temperature (°C)",
         35.0,
         42.0,
         37.0
@@ -156,7 +188,7 @@ Features:
 
     if temperature > 39:
 
-        st.error("🔥 High Fever Detected")
+        st.error("🔥 High Fever")
 
     elif temperature > 37.5:
 
@@ -164,18 +196,7 @@ Features:
 
     else:
 
-        st.success("🟢 Normal Temperature")
-
-    # ---------------- CLEAR CHAT ----------------
-    if st.button("🗑️ Clear Current Chat"):
-
-        st.session_state.messages = []
-
-        st.session_state.chat_history[
-            st.session_state.current_chat
-        ] = []
-
-        st.rerun()
+        st.success("🟢 Normal")
 
 # ---------------- QUICK SYMPTOMS ----------------
 st.markdown("""
@@ -225,16 +246,12 @@ elif vomiting_btn:
 elif dizziness_btn:
     user_input = "I feel dizziness"
 
-# ---------------- DISPLAY CHAT ----------------
-chat_container = st.container()
+# ---------------- CHAT DISPLAY ----------------
+for msg in st.session_state.messages:
 
-with chat_container:
+    with st.chat_message(msg["role"]):
 
-    for msg in st.session_state.messages:
-
-        with st.chat_message(msg["role"]):
-
-            st.markdown(msg["content"])
+        st.markdown(msg["content"])
 
 # ---------------- TYPING EFFECT ----------------
 def typing_effect(text):
@@ -262,27 +279,24 @@ if chat_input:
 # ---------------- PROCESS ----------------
 if user_input:
 
-    # SHOW TEMPERATURE ONLY FOR FEVER
+    # TEMPERATURE ONLY FOR FEVER
     if "fever" in user_input.lower():
 
         user_message = f"""
-🩺 Symptom: {user_input}
+🩺 {user_input}
 
-🌡️ Body Temperature: {temperature}°C
+🌡️ Temperature: {temperature}°C
 """
 
     else:
 
-        user_message = f"""
-🩺 Symptom: {user_input}
-"""
+        user_message = f"🩺 {user_input}"
 
     # USER MESSAGE
     with st.chat_message("user"):
 
         st.markdown(user_message)
 
-    # STORE USER MESSAGE
     st.session_state.messages.append({
         "role": "user",
         "content": user_message
@@ -304,26 +318,18 @@ if user_input:
     # ---------------- EMERGENCY ALERT ----------------
     if critical_case:
 
-        st.error("🚨 Critical Condition Detected!")
+        st.error("🚨 Critical Condition Detected")
 
         st.warning("""
 📞 Emergency Helpline: 108
 
-🏥 Please visit nearest hospital immediately.
+🏥 Please visit the nearest hospital immediately.
 """)
 
-        st.markdown("""
-### 🏥 Nearby Hospitals
-
-[🔗 Open Google Maps Hospitals Nearby](https://www.google.com/maps/search/hospitals+near+me)
-""")
-
-    # ---------------- ASSISTANT RESPONSE ----------------
+    # ---------------- AI RESPONSE ----------------
     with st.chat_message("assistant"):
 
-        with st.spinner(
-            "🧠 Analyzing symptoms..."
-        ):
+        with st.spinner("🧠 Analyzing symptoms..."):
 
             try:
 
@@ -334,12 +340,11 @@ if user_input:
             except Exception as e:
 
                 final_reply = (
-                    "⚠️ Error generating response."
+                    "⚠️ Unable to generate response."
                 )
 
                 print("Backend Error:", e)
 
-        # TYPING EFFECT
         typing_effect(final_reply)
 
         # FEVER ALERTS
@@ -355,21 +360,29 @@ if user_input:
 
             else:
 
-                st.success("🟢 Temperature Looks Normal")
+                st.success("🟢 Temperature Normal")
 
         # CHEST PAIN ALERT
         if "chest pain" in user_input.lower():
 
-            st.error("🚨 Critical Severity")
+            st.error("🚨 Emergency Severity")
 
-    # STORE ASSISTANT RESPONSE
+    # STORE RESPONSE
     st.session_state.messages.append({
         "role": "assistant",
         "content": final_reply
     })
 
-    # SAVE CHAT HISTORY
-    st.session_state.chat_history[
+    # ---------------- SAVE CHAT ----------------
+    if st.session_state.current_chat is None:
+
+        chat_id = datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
+
+        st.session_state.current_chat = chat_id
+
+    st.session_state.chat_sessions[
         st.session_state.current_chat
     ] = st.session_state.messages
 
@@ -377,5 +390,5 @@ if user_input:
 st.markdown("---")
 
 st.caption(
-    "🏥 MediCare AI | Smart Healthcare Chatbot"
+    "🏥 MediCare AI • AI Healthcare Assistant"
 )
