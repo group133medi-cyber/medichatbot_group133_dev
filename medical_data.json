@@ -12,15 +12,47 @@
       "severity": "medium",
       "score": 2,
       "emergency": false,
-      "advice": "Stay hydrated, rest properly, and monitor your temperature regularly.",
-      "follow_up": [
-        "How long have you had the fever?",
-        "Do you also have chills or cough?"
-      ],
+      "advice": "Stay hydrated and monitor temperature regularly.",
+
       "possible_conditions": [
         "Flu",
-        "Viral infection",
-        "COVID-19"
+        "COVID-19",
+        "Viral Infection"
+      ],
+
+      "follow_up_flow": [
+
+        {
+          "id": "fever_duration",
+          "question": "How long have you had the fever?",
+          "rules": [
+            {
+              "keywords": [
+                "5 days",
+                "6 days",
+                "1 week",
+                "7 days"
+              ],
+              "increase_score": 2
+            }
+          ]
+        },
+
+        {
+          "id": "fever_breathing",
+          "question": "Are you experiencing breathing difficulty or chest pain?",
+          "rules": [
+            {
+              "keywords": [
+                "yes",
+                "breathing difficulty",
+                "chest pain"
+              ],
+              "increase_score": 5,
+              "emergency": true
+            }
+          ]
+        }
       ]
     },
 
@@ -28,43 +60,50 @@
       "keywords": [
         "cough",
         "dry cough",
-        "wet cough",
-        "coughing"
+        "wet cough"
       ],
-      "description": "Coughing may result from infection, allergies, or throat irritation.",
+      "description": "Cough may occur due to infection or airway irritation.",
       "severity": "medium",
       "score": 2,
       "emergency": false,
       "advice": "Drink warm fluids and avoid smoke exposure.",
-      "follow_up": [
-        "Is the cough dry or productive?",
-        "How long have you been coughing?"
-      ],
+
       "possible_conditions": [
         "Cold",
-        "Flu",
-        "Bronchitis"
-      ]
-    },
+        "Bronchitis",
+        "Flu"
+      ],
 
-    "cold": {
-      "keywords": [
-        "cold",
-        "common cold",
-        "runny nose",
-        "blocked nose"
-      ],
-      "description": "Common cold is usually caused by a viral infection.",
-      "severity": "low",
-      "score": 1,
-      "emergency": false,
-      "advice": "Rest well, stay hydrated, and consume warm fluids.",
-      "follow_up": [
-        "Do you also have sneezing or sore throat?"
-      ],
-      "possible_conditions": [
-        "Common cold",
-        "Seasonal allergy"
+      "follow_up_flow": [
+
+        {
+          "id": "cough_type",
+          "question": "Is your cough dry or producing mucus?",
+          "rules": [
+            {
+              "keywords": [
+                "mucus",
+                "phlegm"
+              ],
+              "increase_score": 1
+            }
+          ]
+        },
+
+        {
+          "id": "cough_duration",
+          "question": "Have you been coughing for more than one week?",
+          "rules": [
+            {
+              "keywords": [
+                "yes",
+                "1 week",
+                "2 weeks"
+              ],
+              "increase_score": 2
+            }
+          ]
+        }
       ]
     },
 
@@ -74,19 +113,48 @@
         "migraine",
         "head pain"
       ],
-      "description": "Headaches can occur due to stress, dehydration, fatigue, or infections.",
+      "description": "Headaches can occur due to stress, dehydration, or illness.",
       "severity": "low",
       "score": 1,
       "emergency": false,
       "advice": "Rest in a quiet place and stay hydrated.",
-      "follow_up": [
-        "Is the headache severe or mild?",
-        "Do you also feel dizziness?"
-      ],
+
       "possible_conditions": [
         "Migraine",
         "Stress",
         "Dehydration"
+      ],
+
+      "follow_up_flow": [
+
+        {
+          "id": "headache_severity",
+          "question": "Is the headache severe or mild?",
+          "rules": [
+            {
+              "keywords": [
+                "severe",
+                "very painful"
+              ],
+              "increase_score": 2
+            }
+          ]
+        },
+
+        {
+          "id": "headache_dizziness",
+          "question": "Do you also feel dizziness or blurred vision?",
+          "rules": [
+            {
+              "keywords": [
+                "blurred vision",
+                "dizziness"
+              ],
+              "increase_score": 3,
+              "emergency": true
+            }
+          ]
+        }
       ]
     },
 
@@ -94,244 +162,226 @@
       "keywords": [
         "fatigue",
         "tired",
-        "weakness",
-        "low energy"
+        "weakness"
       ],
-      "description": "Fatigue may result from stress, poor sleep, or illness.",
+      "description": "Fatigue may result from stress, illness, or sleep problems.",
       "severity": "low",
       "score": 1,
       "emergency": false,
-      "advice": "Ensure proper rest, hydration, and balanced nutrition.",
-      "follow_up": [
-        "How long have you been feeling tired?"
-      ],
+      "advice": "Ensure proper rest and nutrition.",
+
       "possible_conditions": [
         "Stress",
-        "Anemia",
-        "Sleep deprivation"
+        "Sleep Deprivation",
+        "Anemia"
+      ],
+
+      "follow_up_flow": [
+
+        {
+          "id": "fatigue_duration",
+          "question": "How long have you been feeling tired?",
+          "rules": [
+            {
+              "keywords": [
+                "2 weeks",
+                "1 month"
+              ],
+              "increase_score": 2
+            }
+          ]
+        },
+
+        {
+          "id": "fatigue_weightloss",
+          "question": "Have you noticed weight loss recently?",
+          "rules": [
+            {
+              "keywords": [
+                "yes",
+                "weight loss"
+              ],
+              "increase_score": 3
+            }
+          ]
+        }
       ]
     },
 
-    "sore throat": {
+    "chest_pain": {
       "keywords": [
-        "sore throat",
-        "throat pain",
-        "pain while swallowing"
+        "chest pain",
+        "tight chest",
+        "chest pressure"
       ],
-      "description": "Sore throat is commonly caused by viral or bacterial infections.",
-      "severity": "medium",
-      "score": 2,
-      "emergency": false,
-      "advice": "Drink warm fluids and avoid cold beverages.",
-      "follow_up": [
-        "Do you also have fever or cough?"
-      ],
+      "description": "Chest pain may indicate a cardiovascular emergency.",
+      "severity": "high",
+      "score": 5,
+      "emergency": true,
+      "advice": "Seek immediate medical attention.",
+
       "possible_conditions": [
-        "Cold",
-        "Flu",
-        "Throat infection"
+        "Heart Attack",
+        "Angina"
+      ],
+
+      "follow_up_flow": [
+
+        {
+          "id": "chestpain_spread",
+          "question": "Does the pain spread to your arm, neck, or jaw?",
+          "rules": [
+            {
+              "keywords": [
+                "yes",
+                "arm",
+                "jaw"
+              ],
+              "increase_score": 5,
+              "emergency": true
+            }
+          ]
+        }
+      ]
+    },
+
+    "shortness_of_breath": {
+      "keywords": [
+        "shortness of breath",
+        "breathless",
+        "can't breathe"
+      ],
+      "description": "Breathing difficulty may indicate respiratory or cardiac illness.",
+      "severity": "high",
+      "score": 5,
+      "emergency": true,
+      "advice": "Seek urgent medical care.",
+
+      "possible_conditions": [
+        "Asthma",
+        "COVID-19",
+        "Heart Condition"
+      ],
+
+      "follow_up_flow": [
+
+        {
+          "id": "breathing_sudden",
+          "question": "Did the breathing difficulty start suddenly?",
+          "rules": [
+            {
+              "keywords": [
+                "yes",
+                "suddenly"
+              ],
+              "increase_score": 5,
+              "emergency": true
+            }
+          ]
+        }
       ]
     },
 
     "nausea": {
       "keywords": [
         "nausea",
-        "feeling sick",
-        "queasy"
+        "feeling sick"
       ],
-      "description": "Nausea may occur due to digestive issues or infections.",
+      "description": "Nausea may result from digestive issues or infection.",
       "severity": "medium",
       "score": 2,
       "emergency": false,
       "advice": "Eat light foods and drink fluids slowly.",
-      "follow_up": [
-        "Have you vomited recently?"
-      ],
+
       "possible_conditions": [
-        "Food poisoning",
+        "Food Poisoning",
         "Gastritis"
+      ],
+
+      "follow_up_flow": [
+
+        {
+          "id": "nausea_vomit",
+          "question": "Have you vomited recently?",
+          "rules": [
+            {
+              "keywords": [
+                "yes",
+                "vomiting"
+              ],
+              "increase_score": 2
+            }
+          ]
+        }
       ]
     },
 
     "vomiting": {
       "keywords": [
         "vomiting",
-        "throwing up",
-        "vomit"
+        "throwing up"
       ],
-      "description": "Vomiting can occur due to infections, food poisoning, or digestive issues.",
+      "description": "Vomiting may occur due to infection or food poisoning.",
       "severity": "medium",
       "score": 3,
       "emergency": false,
-      "advice": "Drink small amounts of water frequently to avoid dehydration.",
-      "follow_up": [
-        "How many times have you vomited today?"
-      ],
-      "possible_conditions": [
-        "Food poisoning",
-        "Stomach infection"
-      ]
-    },
+      "advice": "Drink water slowly to avoid dehydration.",
 
-    "diarrhea": {
-      "keywords": [
-        "diarrhea",
-        "loose motion",
-        "watery stool"
-      ],
-      "description": "Diarrhea is commonly caused by infection or food contamination.",
-      "severity": "medium",
-      "score": 3,
-      "emergency": false,
-      "advice": "Stay hydrated and avoid oily foods.",
-      "follow_up": [
-        "Are you experiencing dehydration or weakness?"
-      ],
       "possible_conditions": [
-        "Food poisoning",
-        "Stomach infection"
-      ]
-    },
+        "Food Poisoning",
+        "Stomach Infection"
+      ],
 
-    "stomach pain": {
-      "keywords": [
-        "stomach pain",
-        "abdominal pain",
-        "stomach ache"
-      ],
-      "description": "Stomach pain may result from indigestion, infection, or digestive issues.",
-      "severity": "medium",
-      "score": 2,
-      "emergency": false,
-      "advice": "Eat light meals and avoid spicy foods.",
-      "follow_up": [
-        "Is the pain sharp or dull?"
-      ],
-      "possible_conditions": [
-        "Indigestion",
-        "Gastritis"
-      ]
-    },
+      "follow_up_flow": [
 
-    "chest pain": {
-      "keywords": [
-        "chest pain",
-        "tight chest",
-        "chest pressure"
-      ],
-      "description": "Chest pain may indicate a serious cardiovascular condition.",
-      "severity": "high",
-      "score": 5,
-      "emergency": true,
-      "advice": "Seek immediate medical attention.",
-      "follow_up": [
-        "Does the pain spread to your arm or jaw?"
-      ],
-      "possible_conditions": [
-        "Heart attack",
-        "Angina"
-      ]
-    },
-
-    "shortness of breath": {
-      "keywords": [
-        "shortness of breath",
-        "breathing difficulty",
-        "breathless",
-        "can't breathe"
-      ],
-      "description": "Difficulty breathing may indicate respiratory or cardiac problems.",
-      "severity": "high",
-      "score": 5,
-      "emergency": true,
-      "advice": "Seek urgent medical care immediately.",
-      "follow_up": [
-        "Did the breathing issue start suddenly?"
-      ],
-      "possible_conditions": [
-        "Asthma",
-        "COVID-19",
-        "Heart condition"
+        {
+          "id": "vomit_frequency",
+          "question": "How many times have you vomited today?",
+          "rules": [
+            {
+              "keywords": [
+                "5",
+                "6",
+                "many times"
+              ],
+              "increase_score": 3
+            }
+          ]
+        }
       ]
     },
 
     "dizziness": {
       "keywords": [
         "dizziness",
-        "lightheaded",
-        "feeling faint"
+        "lightheaded"
       ],
-      "description": "Dizziness may result from dehydration, low blood pressure, or stress.",
+      "description": "Dizziness may occur due to dehydration or low blood pressure.",
       "severity": "medium",
       "score": 2,
       "emergency": false,
-      "advice": "Sit down, rest, and drink fluids.",
-      "follow_up": [
-        "Did you faint or lose balance?"
-      ],
+      "advice": "Sit down, rest, and hydrate properly.",
+
       "possible_conditions": [
-        "Low blood pressure",
+        "Low Blood Pressure",
         "Dehydration"
-      ]
-    },
+      ],
 
-    "joint pain": {
-      "keywords": [
-        "joint pain",
-        "knee pain",
-        "arthritis"
-      ],
-      "description": "Joint pain may occur due to inflammation or injury.",
-      "severity": "medium",
-      "score": 2,
-      "emergency": false,
-      "advice": "Rest the affected area and apply warm compresses.",
-      "follow_up": [
-        "Is there swelling around the joint?"
-      ],
-      "possible_conditions": [
-        "Arthritis",
-        "Inflammation"
-      ]
-    },
+      "follow_up_flow": [
 
-    "back pain": {
-      "keywords": [
-        "back pain",
-        "lower back pain",
-        "spine pain"
-      ],
-      "description": "Back pain commonly results from strain, posture issues, or muscle injury.",
-      "severity": "medium",
-      "score": 2,
-      "emergency": false,
-      "advice": "Avoid heavy lifting and maintain good posture.",
-      "follow_up": [
-        "Did the pain begin after physical activity?"
-      ],
-      "possible_conditions": [
-        "Muscle strain",
-        "Posture issue"
-      ]
-    },
-
-    "runny nose": {
-      "keywords": [
-        "runny nose",
-        "nasal discharge",
-        "dripping nose"
-      ],
-      "description": "Runny nose is common in colds and allergies.",
-      "severity": "low",
-      "score": 1,
-      "emergency": false,
-      "advice": "Rest well and stay hydrated.",
-      "follow_up": [
-        "Do you also have sneezing or fever?"
-      ],
-      "possible_conditions": [
-        "Cold",
-        "Allergy"
+        {
+          "id": "dizziness_faint",
+          "question": "Did you faint or lose balance?",
+          "rules": [
+            {
+              "keywords": [
+                "yes",
+                "fainted"
+              ],
+              "increase_score": 4
+            }
+          ]
+        }
       ]
     },
 
@@ -341,80 +391,477 @@
         "fast heartbeat",
         "racing heart"
       ],
-      "description": "Palpitations may occur due to stress, anxiety, or heart rhythm issues.",
+      "description": "Palpitations may indicate anxiety or heart rhythm problems.",
       "severity": "high",
       "score": 4,
       "emergency": true,
-      "advice": "Seek medical advice if symptoms are frequent or severe.",
-      "follow_up": [
-        "Do you also feel chest pain or dizziness?"
-      ],
+      "advice": "Seek medical evaluation if symptoms are severe.",
+
       "possible_conditions": [
         "Anxiety",
-        "Heart rhythm disorder"
-      ]
-    },
-
-    "anxiety": {
-      "keywords": [
-        "anxiety",
-        "panic",
-        "nervous",
-        "stress"
+        "Arrhythmia"
       ],
-      "description": "Anxiety can cause restlessness, rapid heartbeat, and excessive worry.",
+
+      "follow_up_flow": [
+
+        {
+          "id": "palpitations_chestpain",
+          "question": "Do you also have chest pain or shortness of breath?",
+          "rules": [
+            {
+              "keywords": [
+                "yes",
+                "chest pain",
+                "shortness of breath"
+              ],
+              "increase_score": 5,
+              "emergency": true
+            }
+          ]
+        }
+      ]
+    
+  },
+
+  
+
+    "insomnia": {
+      "keywords": [
+        "insomnia",
+        "can't sleep",
+        "trouble sleeping",
+        "sleep problem"
+      ],
+      "description": "Difficulty sleeping may result from stress, anxiety, or lifestyle factors.",
       "severity": "medium",
       "score": 2,
       "emergency": false,
-      "advice": "Practice relaxation techniques and maintain regular sleep.",
-      "follow_up": [
-        "Are you experiencing sleep problems?"
-      ],
+      "advice": "Maintain good sleep hygiene and avoid caffeine late in the day.",
       "possible_conditions": [
+        "Stress",
         "Anxiety disorder",
-        "Stress"
+        "Sleep disorder"
+      ],
+      "follow_up_flow": [
+        {
+          "id": "sleep_duration",
+          "question": "How many hours are you sleeping per night?",
+          "type": "number",
+          "severity_rules": [
+            {
+              "condition": "<= 3",
+              "score_change": 3,
+              "response": "Very limited sleep may significantly affect your health."
+            }
+          ]
+        },
+        {
+          "id": "sleep_duration_problem",
+          "question": "How long have you been experiencing sleep problems?",
+          "type": "duration",
+          "severity_rules": [
+            {
+              "condition": "> 14",
+              "score_change": 2,
+              "response": "Persistent insomnia may require medical evaluation."
+            }
+          ]
+        }
       ]
     },
 
-    "depression": {
+    "rash": {
       "keywords": [
-        "depression",
-        "sad",
-        "low mood",
-        "hopeless"
+        "rash",
+        "skin rash",
+        "red spots",
+        "skin irritation"
       ],
-      "description": "Depression may cause persistent sadness and loss of interest.",
+      "description": "Skin rashes may result from allergies, infections, or irritation.",
+      "severity": "medium",
+      "score": 2,
+      "emergency": false,
+      "advice": "Avoid scratching and keep the affected area clean.",
+      "possible_conditions": [
+        "Allergy",
+        "Skin infection",
+        "Eczema"
+      ],
+      "follow_up_flow": [
+        {
+          "id": "rash_spreading",
+          "question": "Is the rash spreading quickly?",
+          "type": "boolean",
+          "severity_rules": [
+            {
+              "condition": "yes",
+              "score_change": 3,
+              "response": "Rapidly spreading rashes should be medically evaluated."
+            }
+          ]
+        },
+        {
+          "id": "rash_fever",
+          "question": "Do you also have fever with the rash?",
+          "type": "boolean",
+          "severity_rules": [
+            {
+              "condition": "yes",
+              "score_change": 2,
+              "response": "Fever with rash may indicate an infection."
+            }
+          ]
+        }
+      ]
+    },
+
+    "itching": {
+      "keywords": [
+        "itching",
+        "itchy skin",
+        "skin itching"
+      ],
+      "description": "Itching may occur due to allergies, dryness, or skin conditions.",
+      "severity": "low",
+      "score": 1,
+      "emergency": false,
+      "advice": "Avoid allergens and use moisturizing creams if needed.",
+      "possible_conditions": [
+        "Allergy",
+        "Dry skin",
+        "Dermatitis"
+      ],
+      "follow_up_flow": [
+        {
+          "id": "itching_duration",
+          "question": "How long have you been experiencing itching?",
+          "type": "duration",
+          "severity_rules": [
+            {
+              "condition": "> 14",
+              "score_change": 2,
+              "response": "Persistent itching may require a skin evaluation."
+            }
+          ]
+        },
+        {
+          "id": "itching_rash",
+          "question": "Do you also have any visible rash or redness?",
+          "type": "boolean",
+          "severity_rules": [
+            {
+              "condition": "yes",
+              "score_change": 1,
+              "response": "Skin redness together with itching may indicate irritation or allergy."
+            }
+          ]
+        }
+      ]
+    },
+
+    "weight_loss": {
+      "keywords": [
+        "weight loss",
+        "losing weight",
+        "unintentional weight loss"
+      ],
+      "description": "Unexpected weight loss may indicate underlying medical conditions.",
       "severity": "high",
       "score": 4,
       "emergency": false,
-      "advice": "Seek support from a mental health professional.",
-      "follow_up": [
-        "Have you been feeling this way for more than two weeks?"
-      ],
+      "advice": "Monitor your nutrition and seek medical evaluation if ongoing.",
       "possible_conditions": [
-        "Depression",
-        "Mood disorder"
+        "Diabetes",
+        "Thyroid disorder",
+        "Chronic illness"
+      ],
+      "follow_up_flow": [
+        {
+          "id": "weight_loss_amount",
+          "question": "Approximately how much weight have you lost recently?",
+          "type": "number",
+          "severity_rules": [
+            {
+              "condition": ">= 10",
+              "score_change": 3,
+              "response": "Significant weight loss may require medical investigation."
+            }
+          ]
+        },
+        {
+          "id": "weight_loss_appetite",
+          "question": "Have you also experienced loss of appetite?",
+          "type": "boolean",
+          "severity_rules": [
+            {
+              "condition": "yes",
+              "score_change": 2,
+              "response": "Loss of appetite together with weight loss should be evaluated."
+            }
+          ]
+        }
       ]
     },
 
-    "blurred vision": {
+    "loss_of_appetite": {
       "keywords": [
-        "blurred vision",
-        "blurry eyes",
-        "vision problem"
+        "loss of appetite",
+        "not hungry",
+        "reduced appetite"
       ],
-      "description": "Blurred vision may result from eye strain or underlying medical conditions.",
-      "severity": "high",
-      "score": 4,
-      "emergency": true,
-      "advice": "Consult a doctor if vision changes are sudden or severe.",
-      "follow_up": [
-        "Did the blurred vision begin suddenly?"
-      ],
+      "description": "Reduced appetite may result from infection, stress, or digestive problems.",
+      "severity": "medium",
+      "score": 2,
+      "emergency": false,
+      "advice": "Eat small nutritious meals and stay hydrated.",
       "possible_conditions": [
-        "Eye strain",
-        "Diabetes",
-        "Neurological issue"
+        "Infection",
+        "Stress",
+        "Digestive disorder"
+      ],
+      "follow_up_flow": [
+        {
+          "id": "appetite_duration",
+          "question": "How long have you had reduced appetite?",
+          "type": "duration",
+          "severity_rules": [
+            {
+              "condition": "> 7",
+              "score_change": 2,
+              "response": "Persistent appetite loss may need medical attention."
+            }
+          ]
+        },
+        {
+          "id": "appetite_weight_loss",
+          "question": "Have you also noticed weight loss?",
+          "type": "boolean",
+          "severity_rules": [
+            {
+              "condition": "yes",
+              "score_change": 2,
+              "response": "Weight loss with reduced appetite may indicate a more serious condition."
+            }
+          ]
+        }
+      ]
+    },
+
+    "swelling": {
+      "keywords": [
+        "swelling",
+        "swollen",
+        "puffiness"
+      ],
+      "description": "Swelling may result from injury, infection, or fluid retention.",
+      "severity": "medium",
+      "score": 2,
+      "emergency": false,
+      "advice": "Rest the affected area and monitor for worsening.",
+      "possible_conditions": [
+        "Inflammation",
+        "Injury",
+        "Fluid retention"
+      ],
+      "follow_up_flow": [
+        {
+          "id": "swelling_pain",
+          "question": "Is the swelling painful?",
+          "type": "boolean",
+          "severity_rules": [
+            {
+              "condition": "yes",
+              "score_change": 1,
+              "response": "Painful swelling may indicate inflammation or injury."
+            }
+          ]
+        },
+        {
+          "id": "swelling_breathing",
+          "question": "Do you also have shortness of breath?",
+          "type": "boolean",
+          "severity_rules": [
+            {
+              "condition": "yes",
+              "score_change": 4,
+              "emergency": true,
+              "response": "Swelling with breathing difficulty requires urgent medical attention."
+            }
+          ]
+        }
+      ]
+    },
+
+    "constipation": {
+      "keywords": [
+        "constipation",
+        "hard stool",
+        "difficulty passing stool"
+      ],
+      "description": "Constipation may result from dehydration or dietary factors.",
+      "severity": "low",
+      "score": 1,
+      "emergency": false,
+      "advice": "Increase fiber intake and drink enough water.",
+      "possible_conditions": [
+        "Dehydration",
+        "Digestive issue"
+      ],
+      "follow_up_flow": [
+        {
+          "id": "constipation_duration",
+          "question": "How many days have you been constipated?",
+          "type": "duration",
+          "severity_rules": [
+            {
+              "condition": "> 7",
+              "score_change": 2,
+              "response": "Persistent constipation may require medical advice."
+            }
+          ]
+        },
+        {
+          "id": "constipation_pain",
+          "question": "Are you also experiencing abdominal pain?",
+          "type": "boolean",
+          "severity_rules": [
+            {
+              "condition": "yes",
+              "score_change": 2,
+              "response": "Constipation with abdominal pain should be monitored closely."
+            }
+          ]
+        }
+      ]
+    },
+
+    "ear_pain": {
+      "keywords": [
+        "ear pain",
+        "earache",
+        "pain in ear"
+      ],
+      "description": "Ear pain may result from infection or pressure buildup.",
+      "severity": "medium",
+      "score": 2,
+      "emergency": false,
+      "advice": "Avoid inserting objects into the ear and monitor symptoms.",
+      "possible_conditions": [
+        "Ear infection",
+        "Pressure buildup"
+      ],
+      "follow_up_flow": [
+        {
+          "id": "ear_discharge",
+          "question": "Is there any fluid or discharge from the ear?",
+          "type": "boolean",
+          "severity_rules": [
+            {
+              "condition": "yes",
+              "score_change": 2,
+              "response": "Ear discharge may indicate infection."
+            }
+          ]
+        },
+        {
+          "id": "ear_hearing",
+          "question": "Have you noticed hearing loss?",
+          "type": "boolean",
+          "severity_rules": [
+            {
+              "condition": "yes",
+              "score_change": 2,
+              "response": "Hearing changes should be medically evaluated."
+            }
+          ]
+        }
+      ]
+    },
+
+    "frequent_urination": {
+      "keywords": [
+        "frequent urination",
+        "urinating often",
+        "pee frequently"
+      ],
+      "description": "Frequent urination may result from infection or high fluid intake.",
+      "severity": "medium",
+      "score": 2,
+      "emergency": false,
+      "advice": "Stay hydrated and monitor for burning sensation or fever.",
+      "possible_conditions": [
+        "UTI",
+        "Diabetes"
+      ],
+      "follow_up_flow": [
+        {
+          "id": "urination_burning",
+          "question": "Do you feel burning while urinating?",
+          "type": "boolean",
+          "severity_rules": [
+            {
+              "condition": "yes",
+              "score_change": 2,
+              "response": "Burning urination may indicate a urinary tract infection."
+            }
+          ]
+        },
+        {
+          "id": "urination_fever",
+          "question": "Do you also have fever?",
+          "type": "boolean",
+          "severity_rules": [
+            {
+              "condition": "yes",
+              "score_change": 3,
+              "response": "Fever with urinary symptoms may require medical evaluation."
+            }
+          ]
+        }
+      ]
+    },
+
+    "muscle_pain": {
+      "keywords": [
+        "muscle pain",
+        "body ache",
+        "muscle ache"
+      ],
+      "description": "Muscle pain may result from strain, infection, or physical exertion.",
+      "severity": "medium",
+      "score": 2,
+      "emergency": false,
+      "advice": "Rest adequately and stay hydrated.",
+      "possible_conditions": [
+        "Viral infection",
+        "Muscle strain",
+        "Flu"
+      ],
+      "follow_up_flow": [
+        {
+          "id": "muscle_fever",
+          "question": "Do you also have fever or chills?",
+          "type": "boolean",
+          "severity_rules": [
+            {
+              "condition": "yes",
+              "score_change": 2,
+              "response": "Muscle aches with fever may indicate an infection."
+            }
+          ]
+        },
+        {
+          "id": "muscle_severity",
+          "question": "Is the pain severe enough to limit movement?",
+          "type": "boolean",
+          "severity_rules": [
+            {
+              "condition": "yes",
+              "score_change": 2,
+              "response": "Severe muscle pain should be evaluated if persistent."
+            }
+          ]
+        }
       ]
     }
   },
@@ -426,31 +873,19 @@
         "fever",
         "cough"
       ],
-      "condition": "Possible viral infection or flu",
+      "condition": "Possible Flu or Viral Infection",
       "severity": "medium",
       "score_bonus": 2,
       "emergency": false,
-      "advice": "Monitor your temperature, stay hydrated, and rest properly."
+      "advice": "Rest, hydrate, and monitor symptoms."
     },
 
     {
       "symptoms": [
-        "fever",
-        "sore throat"
+        "chest_pain",
+        "shortness_of_breath"
       ],
-      "condition": "Possible throat infection or flu",
-      "severity": "medium",
-      "score_bonus": 2,
-      "emergency": false,
-      "advice": "Drink warm fluids and monitor worsening symptoms."
-    },
-
-    {
-      "symptoms": [
-        "chest pain",
-        "shortness of breath"
-      ],
-      "condition": "Possible cardiac or respiratory emergency",
+      "condition": "Possible Cardiac Emergency",
       "severity": "high",
       "score_bonus": 5,
       "emergency": true,
@@ -462,23 +897,11 @@
         "nausea",
         "vomiting"
       ],
-      "condition": "Possible food poisoning or stomach infection",
+      "condition": "Possible Food Poisoning",
       "severity": "medium",
       "score_bonus": 2,
       "emergency": false,
-      "advice": "Drink fluids frequently and avoid heavy meals."
-    },
-
-    {
-      "symptoms": [
-        "vomiting",
-        "diarrhea"
-      ],
-      "condition": "High risk of dehydration",
-      "severity": "medium",
-      "score_bonus": 3,
-      "emergency": false,
-      "advice": "Increase fluid intake and monitor dehydration symptoms."
+      "advice": "Maintain hydration and monitor worsening symptoms."
     },
 
     {
@@ -486,35 +909,11 @@
         "headache",
         "dizziness"
       ],
-      "condition": "Possible dehydration or stress-related issue",
-      "severity": "low",
-      "score_bonus": 1,
-      "emergency": false,
-      "advice": "Rest properly and drink enough water."
-    },
-
-    {
-      "symptoms": [
-        "fatigue",
-        "depression"
-      ],
-      "condition": "Possible stress, burnout, or mood-related condition",
+      "condition": "Possible Dehydration or Neurological Issue",
       "severity": "medium",
       "score_bonus": 2,
       "emergency": false,
-      "advice": "Consider consulting a mental health professional."
-    },
-
-    {
-      "symptoms": [
-        "runny nose",
-        "cough"
-      ],
-      "condition": "Possible common cold or allergy",
-      "severity": "low",
-      "score_bonus": 1,
-      "emergency": false,
-      "advice": "Rest well and monitor if symptoms worsen."
+      "advice": "Rest well and monitor symptoms closely."
     }
   ]
 }
